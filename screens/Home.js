@@ -1,9 +1,10 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { StatusBar, View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 
 const Dashboard = () => {
   return (
     <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#2a2a2a" />
       {/* Header */}
       <View style={styles.firstheader}>
         <Text style={styles.home}>Home</Text>
@@ -64,7 +65,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f8f9fa',
     padding: 16,
-    marginTop:25
+   
   },
   firstheader: {
     flexDirection: 'row',

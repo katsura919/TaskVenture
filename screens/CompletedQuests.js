@@ -79,7 +79,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f8f9fa',
     padding: 16,
-    marginTop:25  },
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'center',

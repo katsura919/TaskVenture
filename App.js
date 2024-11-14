@@ -10,6 +10,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Home from './screens/Home';
 import AddTask from './screens/AddTask';
 import MyTasks from './screens/MyTasks';
+import TaskDetails from './screens/TaskDetails';
 import CompletedQuests from './screens/CompletedQuests';
 import Profile from './screens/Profile';
 import Settings from './screens/Settings';
@@ -30,11 +31,26 @@ const initializeDatabase = async (db) => {
         password TEXT
       );
 
+
       CREATE TABLE IF NOT EXISTS tasks (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        task TEXT,
-        status TEXT
+          task_id INTEGER PRIMARY KEY AUTOINCREMENT,
+          title TEXT,
+          description TEXT,
+          status TEXT,
+          date_created DATETIME DEFAULT CURRENT_TIMESTAMP,
+          due_date DATETIME
       );
+
+      CREATE TABLE IF NOT EXISTS subtasks (
+          subtask_id INTEGER PRIMARY KEY AUTOINCREMENT,
+          task_id INTEGER,  -- Foreign key to link to the task
+          subtask_title TEXT,
+          status TEXT,
+          date_created DATETIME DEFAULT CURRENT_TIMESTAMP,
+          due_date DATETIME,
+          FOREIGN KEY (task_id) REFERENCES tasks(task_id) ON DELETE CASCADE
+      );
+
     `);
 
     console.log('Database initialized!');
@@ -56,42 +72,43 @@ function MyTabs() {
 
           if (route.name === 'Home') {
             iconName = focused ? 'home' : 'home-outline';
-          } else if (route.name === 'Quests') {
-            iconName = focused ? 'list-sharp' : 'list-outline';
-          } else if (route.name === 'CompletedQuests') {
-            iconName = focused ? 'checkmark-done-sharp' : 'checkmark-done-outline';
+          } else if (route.name === 'Stats') {
+            iconName = focused ? 'stats-chart' : 'stats-chart-outline';
+          } else if (route.name === 'MyTask') {
+            iconName = focused ? 'list' : 'list-outline';
           } else if (route.name === 'Profile') {
             iconName = focused ? 'person' : 'person-outline';
           }
 
-          return <Ionicons name={iconName} size={size} color={color} />;
+          return <Ionicons name={iconName} size={24} color={color} />;
         },
-        tabBarShowLabel: false,
-        tabBarStyle: { backgroundColor: '#2a2a2a' },
-        tabBarActiveTintColor: '#e8e9e8',
-        tabBarInactiveTintColor: '#e8e9e8',
+        tabBarShowLabel: true,
+        tabBarStyle: { backgroundColor: '#ffffff' },
+        tabBarActiveTintColor: '#5B4CF0',
+        tabBarInactiveTintColor: '#8e8e93',
         headerShown: false,
       })}
     >
       <Tab.Screen name="Home" component={Home} />
-      <Tab.Screen name="Quests" component={MyTasks} />
+      <Tab.Screen name="Stats" component={MyTasks} />
 
       {/* Custom Center Button */}
       <Tab.Screen
         name="CenterButton"
-        component={AddTask} // You can replace this with any screen or a placeholder
+        component={AddTask}
         options={{
           tabBarButton: (props) => (
             <TouchableOpacity
               {...props}
               style={{
-                top: -20,
+                top: 5,
                 justifyContent: 'center',
                 alignItems: 'center',
-                width: 60,
-                height: 60,
-                borderRadius: 30,
-                backgroundColor: '#3e3e3e',
+                width: 40,
+                height: 40,
+                borderRadius: 10, // Adjust this to create rounded square shape
+                backgroundColor: '#5B4CF0',
+                marginHorizontal:20,
               }}
             >
               <Ionicons name="add" size={28} color="white" />
@@ -100,11 +117,12 @@ function MyTabs() {
         }}
       />
 
-      <Tab.Screen name="CompletedQuests" component={CompletedQuests} />
+      <Tab.Screen name="MyTask" component={MyTasks} />
       <Tab.Screen name="Profile" component={Profile} />
     </Tab.Navigator>
   );
 }
+
 
 export default function App() {
   return (
@@ -113,6 +131,7 @@ export default function App() {
         <Stack.Navigator initialRouteName='HomeTabs' screenOptions={{ headerShown: false }}>
           <Stack.Screen name='HomeTabs' component={MyTabs} />
           <Stack.Screen name='ChangePassword' component={ChangePassword} />
+          <Stack.Screen name='TaskDetails' component={TaskDetails} />
         </Stack.Navigator>
       </NavigationContainer>
     </SQLiteProvider>
