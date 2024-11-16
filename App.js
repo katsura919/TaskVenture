@@ -17,41 +17,68 @@ import Settings from './screens/Settings';
 import ChangePassword from './screens/ChangePassword';
 
 // Initialize the database
+const getRandomName = () => {
+  const names = ['John', 'Alice', 'Bob', 'Charlie', 'Eve', 'Zara', 'Liam', 'Sophia', 'Lucas', 'Olivia'];
+  const randomIndex = Math.floor(Math.random() * names.length);
+  return names[randomIndex];
+};
+
 const initializeDatabase = async (db) => {
   try {
     await db.execAsync(`
       PRAGMA journal_mode = WAL;
 
-      CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        firstName TEXT,
-        lastName TEXT,
-        email TEXT UNIQUE,
-        username TEXT UNIQUE,
-        password TEXT
-      );
+              
+        CREATE TABLE IF NOT EXISTS users (
+          user_id INTEGER PRIMARY KEY,  
+          username TEXT DEFAULT 'Adventurer',
+          experience INTEGER DEFAULT 0,
+          level INTEGER DEFAULT 1,
+          title TEXT
+        );
 
-
-      CREATE TABLE IF NOT EXISTS tasks (
+       
+        CREATE TABLE IF NOT EXISTS tasks (
           task_id INTEGER PRIMARY KEY AUTOINCREMENT,
           title TEXT,
           description TEXT,
           status TEXT,
           date_created DATETIME DEFAULT CURRENT_TIMESTAMP,
-          due_date DATETIME
-      );
+          due_date DATETIME,
+          difficulty TEXT CHECK (difficulty IN ('easy', 'medium', 'hard'))  
+        );
 
-      CREATE TABLE IF NOT EXISTS subtasks (
+       
+        CREATE TABLE IF NOT EXISTS subtasks (
           subtask_id INTEGER PRIMARY KEY AUTOINCREMENT,
-          task_id INTEGER,  -- Foreign key to link to the task
+          task_id INTEGER,  
           subtask_title TEXT,
           status TEXT,
           date_created DATETIME DEFAULT CURRENT_TIMESTAMP,
           due_date DATETIME,
           FOREIGN KEY (task_id) REFERENCES tasks(task_id) ON DELETE CASCADE
-      );
+        );
+
 
     `);
+    
+    // Check if there are any users in the table
+    const userExists = await db.getFirstAsync("SELECT 1 FROM users LIMIT 1");
+
+    // If no users exist, insert a random username for the first user with user_id = 1
+    if (!userExists) {
+      const randomUsername = getRandomName();
+
+      // Insert the new user with user_id = 1 (since it's the first user)
+      await db.getFirstAsync(`
+        INSERT INTO users (user_id, username)
+        VALUES (1, ?);
+      `, [randomUsername]);
+
+      console.log(`User with username '${randomUsername}' has been created with user_id: 1`);
+    } else {
+      console.log("User already exists, skipping creation");
+    }
 
     console.log('Database initialized!');
   } catch (error) {
@@ -90,7 +117,7 @@ function MyTabs() {
       })}
     >
       <Tab.Screen name="Home" component={Home} />
-      <Tab.Screen name="Stats" component={MyTasks} />
+      <Tab.Screen name="Stats" component={CompletedQuests} />
 
       {/* Custom Center Button */}
       <Tab.Screen

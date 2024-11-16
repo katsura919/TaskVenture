@@ -1,27 +1,122 @@
-import React from 'react';
-import { View, Text, StyleSheet, Image, Pressable } from 'react-native';
+import React, { useState, useEffect } from "react";
+import { View, Text, StyleSheet, Image } from "react-native";
+import { useSQLiteContext } from "expo-sqlite"; // Adjust based on your SQLite setup
+import { useFocusEffect } from '@react-navigation/native';
 
-const ProfileScreen = ({ navigation }) => {
+const Profile = () => {
+  const db = useSQLiteContext();
+  const [profile, setProfile] = useState(null);
+
+  // Function to check and update the level based on experience
+const updateLevelIfNeeded = async () => {
+  const xpThreshold = 100;
+
+  try {
+    // Fetch the current user data (assuming there's one user in the `users` table)
+    const result = await db.getAllAsync("SELECT * FROM users");
+
+    if (result.length > 0) {
+      const user = result[0]; // Assuming there's only one user in the db
+      
+      let newLevel = user.level;
+      let newExperience = user.experience;
+
+      // If the experience exceeds the threshold, calculate the new level and reset experience
+      if (user.experience >= xpThreshold) {
+        newLevel = user.level + 1;  // Calculate new level
+        newExperience = user.experience % xpThreshold; // Reset experience after leveling up
+      }
+
+      // Only update if level or experience has changed
+      if (newLevel !== user.level || newExperience !== user.experience) {
+        await db.runAsync(
+          `UPDATE users SET level = ?, experience = ? WHERE user_id = ?`,
+          [newLevel, newExperience, 1] // Assuming user_id = 1
+        );
+        console.log(`Level up! New level: ${newLevel}, XP: ${newExperience}`);
+      }
+    }
+  } catch (error) {
+    console.error("Error updating level:", error);
+  }
+};
+
+
+  // Fetch user data from the `users` table
+  const fetchProfile = async () => {
+    try {
+      const result = await db.getAllAsync("SELECT * FROM users");
+
+      if (result.length > 0) {
+        const user = result[0];
+        setProfile(user);
+
+      }
+      console.log(result); // Log the fetched result
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+    }
+  };
+
+
+
+  useEffect(() => {
+   
+
+    // Set up an interval to check and update the level every 10 seconds
+    const intervalId = setInterval(() => {
+      updateLevelIfNeeded(); // Check and update level periodically
+    }, 1000); // Every 1 second
+
+    // Cleanup interval when the component is unmounted
+    return () => clearInterval(intervalId);
+  }, []);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchProfile();
+    }, [])
+  );
+
+  if (!profile) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.loadingText}>Loading profile...</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Profile</Text>
-
+      {/* Profile Picture */}
       <Image
-        source={require('../assets/profile-img.png')} // Replace with your own image source
+        source={require("../assets/Profile.png")} // Replace with the actual profile picture
         style={styles.profileImage}
       />
-      <Text style={styles.name}>User Name</Text> 
-      <Text style={styles.email}>user@example.com</Text> 
-      <View style={styles.buttonsContainer}>
-          <Pressable style={styles.button}>
-            <Text style={styles.buttonText}>Edit Profile</Text>
-          </Pressable>
-          <Pressable style={styles.button} onPress={() => navigation.navigate('ChangePassword')}>
-            <Text style={styles.buttonText}>Change Password</Text>
-          </Pressable>
-          <Pressable style={styles.button} onPress={() => navigation.navigate('Login')}>
-            <Text style={styles.buttonText}>Logout</Text>
-          </Pressable>
+
+      {/* Name */}
+      <Text style={styles.name}>{profile.username}</Text>
+
+      {/* Title */}
+      <Text style={styles.title}>{profile.title || "No title"}</Text>
+
+      {/* Level and Experience */}
+      <View style={styles.levelContainer}>
+        <Text style={styles.levelText}>Level {profile.level}</Text>
+
+        {/* Progress Bar */}
+        <View style={styles.progressBarBackground}>
+          <View
+            style={[
+              styles.progressBarFill,
+              { width: `${profile.experience}%` }, // Use experience as progress
+            ]}
+          />
+        </View>
+
+        <Text style={styles.expText}>
+          {Math.floor(profile.experience % 100)}/100 XP
+        </Text>
       </View>
     </View>
   );
@@ -30,81 +125,60 @@ const ProfileScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     padding: 20,
+    backgroundColor: "#f3f3f3",
   },
-
-  header: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#333',
-    marginTop: 30,
-    marginBottom: 80,
-  },
-  
   profileImage: {
     width: 120,
     height: 120,
     borderRadius: 60,
-    borderWidth: 4,
-    borderColor: '#fff',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.5,
-    shadowRadius: 4,
     marginBottom: 20,
   },
   name: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#333',
+    fontSize: 24,
+    fontWeight: "bold",
     marginBottom: 10,
+    color: "#333",
   },
-  email: {
+  title: {
     fontSize: 18,
-    color: '#666',
-    marginBottom: 30,
+    fontStyle: "italic",
+    marginBottom: 20,
+    color: "#777",
   },
-  
-  buttonsContainer: {
-    flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: '90%',
-    height: 300,
-  },
-  button: {
-    backgroundColor: '#6c64fe',
-    padding: 15,
-    borderRadius: 8,
-    elevation: 3,
-    width: '100%',
-    marginVertical: 2,
-    alignItems: 'center',
-  },
-  buttonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  iconContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: '40%',
+  levelContainer: {
+    alignItems: "center",
     marginTop: 20,
+    width: "100%",
   },
-  iconButton: {
-    backgroundColor: '#007BFF',
-    borderRadius: 50,
-    padding: 10,
-    elevation: 3,
-    alignItems: 'center',
-    justifyContent: 'center',
+  levelText: {
+    fontSize: 18,
+    fontWeight: "600",
+    marginBottom: 10,
+    color: "#555",
+  },
+  progressBarBackground: {
+    width: 300,
+    height: 15,
+    backgroundColor: "#ddd",
+    borderRadius: 10,
+    overflow: "hidden",
+    marginBottom: 5,
+  },
+  progressBarFill: {
+    height: "100%",
+    backgroundColor: "#4caf50",
+  },
+  expText: {
+    fontSize: 14,
+    color: "#777",
+  },
+  loadingText: {
+    fontSize: 16,
+    color: "#666",
   },
 });
 
-export default ProfileScreen;
+export default Profile;

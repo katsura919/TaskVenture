@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, TextInput, Pressable, Alert } from 'react-nativ
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useFocusEffect } from '@react-navigation/native';
+import { Picker } from '@react-native-picker/picker';  // Import Picker component
 
 export default function AddTask() {
   const db = useSQLiteContext();
@@ -15,7 +16,8 @@ export default function AddTask() {
   const [subtasks, setSubtasks] = useState([]);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
-
+  const [difficulty, setDifficulty] = useState('easy');  // Add state for difficulty
+  
   // Reset fields when the screen is focused
   useFocusEffect(
     React.useCallback(() => {
@@ -25,10 +27,11 @@ export default function AddTask() {
       setDueTime(null);
       setSubtask('');
       setSubtasks([]);
+      setDifficulty('easy');
     }, [])
   );
 
-  const addTaskToDb = async (taskText, descriptionText, dueDate) => {
+  const addTaskToDb = async (taskText, descriptionText, dueDate, difficulty) => {
     if (!taskText) {
       Alert.alert('Please enter a task.');
       return;
@@ -37,9 +40,10 @@ export default function AddTask() {
     try {
       const dueDateTime = dueDate ? dueDate.toISOString() : null;
 
+      // Insert the task with the difficulty value
       await db.runAsync(
-        'INSERT INTO tasks (title, description, status, date_created, due_date) VALUES (?, ?, ?, ?, ?)', 
-        [taskText, descriptionText, 'pending', new Date().toISOString(), dueDateTime]
+        'INSERT INTO tasks (title, description, status, date_created, due_date, difficulty) VALUES (?, ?, ?, ?, ?, ?)', 
+        [taskText, descriptionText, 'pending', new Date().toISOString(), dueDateTime, difficulty]
       );
 
       const taskResult = await db.getFirstAsync('SELECT last_insert_rowid() AS task_id');
@@ -59,13 +63,14 @@ export default function AddTask() {
       setDueTime(null);
       setSubtask('');
       setSubtasks([]);
+      setDifficulty('easy');
     } catch (error) {
       console.log('Error inserting task:', error);
     }
   };
 
   const handleAddTask = () => {
-    addTaskToDb(task, description, dueDate);
+    addTaskToDb(task, description, dueDate, difficulty);  // Pass the difficulty to the function
   };
 
   const handleAddSubtask = () => {
@@ -117,7 +122,24 @@ export default function AddTask() {
         placeholderTextColor="#aaa"
       />
 
-      <Text style={styles.label}>Select Due Date</Text>
+      {/* Difficulty Picker */}
+      <View style={styles.difficultyContainer}>
+      <Text style={styles.label}>Difficulty: </Text>
+      <View style={styles.pickerContainer}>
+      <Picker
+        selectedValue={difficulty}
+        onValueChange={(itemValue) => setDifficulty(itemValue)}
+        style={styles.picker}
+      >
+        <Picker.Item label="Easy" value="easy" />
+        <Picker.Item label="Medium" value="medium" />
+        <Picker.Item label="Hard" value="hard" />
+      </Picker>
+      </View>
+      </View>
+      
+      
+      <Text style={styles.label}>Deadline: </Text>
       <Pressable onPress={() => setShowDatePicker(true)} style={styles.dateButton}>
         <Text style={styles.dateText}>
           {dueDate ? dueDate.toLocaleDateString() : 'Date Not Set'}
@@ -199,28 +221,44 @@ const styles = StyleSheet.create({
   },
   input: { 
     width: '100%', 
-    padding: 15, 
+    padding: 10, 
     borderWidth: 1, 
     borderColor: '#ccc', 
-    borderRadius: 12, 
+    borderRadius: 8, 
     backgroundColor: '#fff', 
     marginBottom: 15,
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#333',
+  },
+
+  difficultyContainer: {
+    flexDirection: 'row',
+    width: '100%',
+    alignItems: 'center'
   },
   label: {
     fontSize: 16,
     color: '#4a90e2',
-    marginBottom: 5,
     fontWeight: '500',
+  },
+  pickerContainer:{
+    display: 'flex',
+    width: 130,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'lightblue',
+    borderWidth: 1,
+    borderColor: 'gray',
+    borderRadius:10,
+  },
+  picker: {
+    width: '100%', 
   },
   dateButton: {
     padding: 12,
-    backgroundColor: '#4a90e2',
-    borderRadius: 12,
-    marginBottom: 20,
-    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    marginBottom: 15,
   },
   dateText: {
     fontSize: 18,
@@ -237,27 +275,23 @@ const styles = StyleSheet.create({
     width: '100%', 
     height: 50, 
     backgroundColor: '#4a90e2', 
-    padding: 10, 
+    padding: 15, 
     borderRadius: 12, 
-    alignItems: 'center',
-    marginTop: 10,
+    alignItems: 'center', 
+    marginBottom: 15,
   },
   buttonText: { 
-    color: 'white', 
     fontSize: 18, 
-    fontWeight: 'bold' 
+    color: '#fff',
+    fontWeight: 'bold',
   },
-  subtasksContainer: {
-    width: '100%',
-    marginTop: 15,
+  subtasksContainer: { 
+    width: '100%', 
     marginBottom: 20,
   },
-  subtask: {
-    fontSize: 16,
-    color: '#555',
-    marginBottom: 8,
-    backgroundColor: '#e1e7ed',
-    padding: 8,
-    borderRadius: 8,
+  subtask: { 
+    fontSize: 16, 
+    color: '#333', 
+    marginBottom: 5, 
   },
 });

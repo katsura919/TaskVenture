@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, TextInput, TouchableOpacity, Alert, FlatList } 
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useSQLiteContext } from 'expo-sqlite';
+import { Picker } from '@react-native-picker/picker';
 
 export default function TaskDetails({ route, navigation }) {
   const { taskId } = route.params;
@@ -11,24 +12,26 @@ export default function TaskDetails({ route, navigation }) {
   const [subtasks, setSubtasks] = useState([]);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [dueDate, setDueDate] = useState(null); // Set initial to null
-  const [dueTime, setDueTime] = useState(null); // Set initial to null
+  const [difficulty, setDifficulty] = useState('easy');
+  const [dueDate, setDueDate] = useState(null);
+  const [dueTime, setDueTime] = useState(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [newSubtask, setNewSubtask] = useState('');
   const [isEditing, setIsEditing] = useState(false);
-  
+
   useEffect(() => {
     const fetchTaskDetails = async () => {
       try {
         const result = await db.getFirstAsync('SELECT * FROM tasks WHERE task_id = ?', [taskId]);
         setTask(result);
-        setTitle(result.title);
-        setDescription(result.description || '');
+        setTitle(result.title || ''); // Default to empty string if no title
+        setDescription(result.description || ''); // Default to empty string if no description
+        setDifficulty(result.difficulty || 'easy');
         if (result.due_date) {
           const dueDateTime = new Date(result.due_date);
           setDueDate(dueDateTime);
-          setDueTime(dueDateTime); // set both due date and time from the same field
+          setDueTime(dueDateTime);
         }
 
         const subtaskResult = await db.getAllAsync('SELECT * FROM subtasks WHERE task_id = ?', [taskId]);
@@ -42,19 +45,19 @@ export default function TaskDetails({ route, navigation }) {
   }, [taskId]);
 
   const updateTaskDetails = async () => {
-    if (!title || !dueDate || !dueTime) {
-      Alert.alert('Please fill out the title, due date, and time.');
-      return;
-    }
     try {
-      const updatedDueDateTime = new Date(dueDate);
-      updatedDueDateTime.setHours(dueTime.getHours(), dueTime.getMinutes(), 0, 0);
-      await db.runAsync('UPDATE tasks SET title = ?, description = ?, due_date = ? WHERE task_id = ?', [
-        title,
-        description,
-        updatedDueDateTime.toISOString(),
-        taskId,
-      ]);
+      // Only update fields that have new values
+      const updatedTask = {
+        title: title || task.title, // Use existing title if new title is empty
+        description: description || task.description, // Use existing description if new description is empty
+        difficulty,
+        due_date: dueDate ? new Date(dueDate.setHours(dueTime.getHours(), dueTime.getMinutes(), 0, 0)).toISOString() : task.due_date // Only update due date if a new one is provided
+      };
+
+      await db.runAsync(
+        'UPDATE tasks SET title = ?, description = ?, due_date = ?, difficulty = ? WHERE task_id = ?',
+        [updatedTask.title, updatedTask.description, updatedTask.due_date, updatedTask.difficulty, taskId]
+      );
       setIsEditing(false);
     } catch (error) {
       console.log('Error updating task:', error);
@@ -70,7 +73,7 @@ export default function TaskDetails({ route, navigation }) {
   const handleTimeChange = (event, selectedTime) => {
     const currentTime = selectedTime || dueTime;
     setShowTimePicker(false);
-    setDueTime(currentTime);  // Update the due time state here
+    setDueTime(currentTime);
   };
 
   const toggleSubtaskStatus = async (subtaskId, currentStatus) => {
@@ -123,7 +126,7 @@ export default function TaskDetails({ route, navigation }) {
   };
 
   const formatDueTime = (time) => {
-    if (!time) return ''; // If due time is not set, return empty string
+    if (!time) return '';
     return time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
@@ -144,7 +147,6 @@ export default function TaskDetails({ route, navigation }) {
         <>
           <Text style={styles.headerText}>Task Details</Text>
 
-          {/* Title Input */}
           <TextInput
             style={[styles.input, isEditing && styles.editable]}
             value={title}
@@ -153,7 +155,6 @@ export default function TaskDetails({ route, navigation }) {
             editable={isEditing}
           />
 
-          {/* Description Input */}
           <TextInput
             style={[styles.input, isEditing && styles.editable]}
             value={description}
@@ -162,7 +163,24 @@ export default function TaskDetails({ route, navigation }) {
             editable={isEditing}
           />
 
-          {/* Date Display */}
+          {/* Difficulty Picker */}
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Difficulty:   </Text>
+            {isEditing ? (
+              <Picker
+                selectedValue={difficulty}
+                onValueChange={(itemValue) => setDifficulty(itemValue)}
+                style={styles.picker}
+              >
+                <Picker.Item label="Easy" value="easy" />
+                <Picker.Item label="Medium" value="medium" />
+                <Picker.Item label="Hard" value="hard" />
+              </Picker>
+            ) : (
+              <Text style={styles.difficultyText}>{difficulty}</Text>
+            )}
+          </View>
+
           <View style={styles.dateTimeContainer}>
             <Text style={styles.dateText}>Due Date: {formatDueDate(dueDate)}</Text>
             {isEditing && (
@@ -172,17 +190,10 @@ export default function TaskDetails({ route, navigation }) {
             )}
           </View>
 
-          {/* Date Picker */}
           {showDatePicker && isEditing && (
-            <DateTimePicker
-              value={dueDate || new Date()}
-              mode="date"
-              display="default"
-              onChange={handleDateChange}
-            />
+            <DateTimePicker value={dueDate || new Date()} mode="date" display="default" onChange={handleDateChange} />
           )}
 
-          {/* Time Display */}
           {dueDate && (
             <View style={styles.dateTimeContainer}>
               <Text style={styles.dateText}>Due Time: {formatDueTime(dueTime)}</Text>
@@ -194,17 +205,10 @@ export default function TaskDetails({ route, navigation }) {
             </View>
           )}
 
-          {/* Time Picker */}
           {showTimePicker && isEditing && (
-            <DateTimePicker
-              value={dueTime || new Date()}
-              mode="time"
-              display="default"
-              onChange={handleTimeChange}
-            />
+            <DateTimePicker value={dueTime || new Date()} mode="time" display="default" onChange={handleTimeChange} />
           )}
 
-          {/* Subtask Input */}
           <TextInput
             style={styles.input}
             value={newSubtask}
@@ -215,124 +219,50 @@ export default function TaskDetails({ route, navigation }) {
             <Text style={styles.buttonText}>Add Subtask</Text>
           </TouchableOpacity>
 
-          {/* Subtask List */}
           <FlatList
             data={subtasks}
             keyExtractor={(item) => item.subtask_id.toString()}
             renderItem={({ item }) => (
               <View style={styles.subtaskContainer}>
-                <Text
-                  style={[styles.subtaskText, item.status === 'completed' && styles.completedSubtaskText]}
-                >
-                  {item.subtask_title}
-                </Text>
-                <TouchableOpacity
-                  style={styles.checkButton}
-                  onPress={() => toggleSubtaskStatus(item.subtask_id, item.status)}
-                >
-                  <Ionicons name="checkmark-circle-outline" size={24} color={item.status === 'completed' ? 'green' : '#4CAF50'} />
+                <TouchableOpacity onPress={() => toggleSubtaskStatus(item.subtask_id, item.status)}>
+                  <Text style={[styles.subtaskText, item.status === 'completed' && styles.completed]}>
+                    {item.subtask_title}
+                  </Text>
                 </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.deleteButton}
-                  onPress={() => deleteSubtask(item.subtask_id)}
-                >
-                  <Ionicons name="trash-outline" size={20} color="#FF6347" />
+                <TouchableOpacity onPress={() => deleteSubtask(item.subtask_id)}>
+                  <Ionicons name="trash-outline" size={20} color="#f44336" />
                 </TouchableOpacity>
               </View>
             )}
           />
         </>
       ) : (
-        <Text>Loading task...</Text>
+        <Text>Loading...</Text>
       )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    backgroundColor: '#fff',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  backButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  backButtonText: {
-    fontSize: 16,
-    color: '#4CAF50',
-    marginLeft: 10,
-  },
-  editSaveButton: {
-    padding: 10,
-    backgroundColor: '#4CAF50',
-    borderRadius: 5,
-  },
-  buttonText: {
-    fontSize: 16,
-    color: '#fff',
-  },
-  headerText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginVertical: 20,
-    textAlign: 'center',
-  },
-  input: {
-    padding: 10,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 5,
-    marginBottom: 15,
-  },
-  editable: {
-    borderColor: '#4CAF50',
-  },
-  dateTimeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  dateText: {
-    fontSize: 16,
-    marginRight: 10,
-  },
-  calendarButton: {
-    padding: 5,
-  },
-  clockButton: {
-    padding: 5,
-  },
-  subtaskContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  subtaskText: {
-    fontSize: 16,
-    flex: 1,
-  },
-  completedSubtaskText: {
-    textDecorationLine: 'line-through',
-    color: '#888',
-  },
-  checkButton: {
-    padding: 5,
-  },
-  deleteButton: {
-    padding: 5,
-  },
-  button: {
-    backgroundColor: '#4CAF50',
-    padding: 10,
-    borderRadius: 5,
-    marginBottom: 15,
-    alignItems: 'center',
-  },
+  container: { flex: 1, padding: 16 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 },
+  backButton: { flexDirection: 'row', alignItems: 'center' },
+  backButtonText: { marginLeft: 8, color: '#1b1c1c' },
+  editSaveButton: { justifyContent: 'center', alignItems: 'center', backgroundColor: '#4CAF50' },
+  buttonText: { color: '#fff', fontSize: 16 },
+  headerText: { fontSize: 24, fontWeight: 'bold', marginBottom: 16 },
+  input: { borderBottomWidth: 1, padding: 8, marginBottom: 16 },
+  editable: { borderColor: '#4CAF50' },
+  inputContainer: { marginBottom: 16, flexDirection: 'row', alignItems: 'center'},
+  label: { fontSize: 16,  },
+  picker: { height: 50, width: '100%' },
+  difficultyText: { fontSize: 18 },
+  dateTimeContainer: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16, alignItems: 'center' },
+  calendarButton: { padding: 8 },
+  clockButton: { padding: 8 },
+  dateText: { fontSize: 16 },
+  subtaskContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  subtaskText: { fontSize: 16 },
+  completed: { textDecorationLine: 'line-through' },
+  button: { backgroundColor: '#4CAF50', padding: 10, marginBottom: 16, alignItems: 'center' },
 });

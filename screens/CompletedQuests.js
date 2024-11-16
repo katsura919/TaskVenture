@@ -1,105 +1,177 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, TextInput, Pressable, Alert, FlatList, TouchableOpacity, Image, Modal } from 'react-native';
+import { StyleSheet, Text, View, FlatList, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons'; // Import Expo Ionicons
 import { useSQLiteContext } from 'expo-sqlite';
-import { Ionicons } from '@expo/vector-icons';
-import { useFonts } from 'expo-font';
-import { useFocusEffect } from '@react-navigation/native'; // Import useFocusEffect
+import { useFocusEffect } from '@react-navigation/native';
 
-
-
-
-
-export default function App() {
-
+export default function MyTasks({ navigation }) {
   const db = useSQLiteContext();
-  const [task, setTask] = useState('');
-  const [tasks, setTasks] = useState([]);
-  const [modalVisible, setModalVisible] = useState(false);
-  
-  const fetchTasksCompleted = async () => {
+  const [easyTasks, setEasyTasks] = useState([]);
+  const [mediumTasks, setMediumTasks] = useState([]);
+  const [hardTasks, setHardTasks] = useState([]);
+
+  const fetchTasks = async () => {
     try {
-        const result = await db.getAllAsync('SELECT * FROM tasks WHERE status = ?', ['completed']);
-      setTasks(result);
+      const result = await db.getAllAsync('SELECT * FROM tasks WHERE status = ?', ['completed']);
+      
+      // Separate tasks into categories based on difficulty
+      const easy = result.filter(task => task.difficulty === 'easy');
+      const medium = result.filter(task => task.difficulty === 'medium');
+      const hard = result.filter(task => task.difficulty === 'hard');
+
+      setEasyTasks(easy);
+      setMediumTasks(medium);
+      setHardTasks(hard);
     } catch (error) {
       console.log('Error fetching tasks:', error);
     }
   };
 
-  useFocusEffect(
-    React.useCallback(() => {
-      fetchTasksCompleted();
-    }, [])
-  );
+  const calculateRemainingDays = (dueDate) => {
+    if (!dueDate) return "Due Date not set";
 
+    const currentDate = new Date();
+    const dueDateObj = new Date(dueDate);
+    const diffTime = dueDateObj - currentDate;
+    const remainingDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); // Convert time difference to days
 
-  const markTaskAsPending = async (id) => {
+    return remainingDays >= 0
+      ? `${remainingDays} days remaining`
+      : "Overdue";
+  };
+
+  const markTaskAsCompleted = async (taskId) => {
     try {
-      await db.runAsync('UPDATE tasks SET status = ? WHERE id = ?', ['pending', id]);
-      fetchTasksCompleted();
+      // Update task status to 'completed' in the database
+      await db.getFirstAsync(
+        `UPDATE tasks SET status = ? WHERE task_id = ?`,
+        ['pending', taskId]
+      );
+      fetchTasks(); // Re-fetch tasks to update the list
     } catch (error) {
-      console.log('Error updating task:', error);
+      console.log('Error marking task as completed:', error);
     }
   };
 
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchTasks();
+    }, [])
+  );
+
   return (
     <View style={styles.container}>
-
       <View style={styles.header}>
-        <Text style={styles.headerText}>Completed Quests</Text>
+        <Text style={styles.headerText}>My Quests</Text>
       </View>
-    
 
+      {/* Easy Tasks */}
+      <View style={styles.taskListContainer}>
+        <Text style={styles.categoryHeader}>Easy Tasks</Text>
+        <FlatList
+          data={easyTasks}
+          keyExtractor={(item) => item.task_id.toString()}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              onPress={() => navigation.navigate('TaskDetails', { taskId: item.task_id })}
+            >
+              <View style={[styles.taskContainer, item.status === 'completed' && styles.taskCompleted]}>
+                <TouchableOpacity
+                  onPress={() => markTaskAsCompleted(item.task_id)} // Mark task as completed when tapped
+                >
+                  <Ionicons
+                    name={item.status === 'completed' ? 'checkbox' : 'checkbox-outline'} // Change icon based on completion status
+                    size={24}
+                    color={item.status === 'completed' ? '#28a745' : '#6c757d'}
+                    style={styles.taskIcon}
+                  />
+                </TouchableOpacity>
+                <Text style={[styles.taskText, item.status === 'completed' && styles.completedTaskText]}>
+                  {item.title}
+                </Text>
+                <Text style={styles.dueDateText}>{calculateRemainingDays(item.due_date)}</Text>
+              </View>
+            </TouchableOpacity>
+          )}
+        />
+      </View>
 
-    {/* Task List */}
-    <FlatList
-      data={tasks}
-      keyExtractor={(item) => item.id.toString()}
-      renderItem={({ item }) => (
-        <View style={[styles.taskContainer, item.status === 'completed' && styles.taskCompleted]}>
-          <Ionicons name="calendar" size={24} color="#6c757d" style={styles.taskIcon} />
-          <Text style={[styles.taskText, item.status === 'completed' && styles.completedTaskText]}>
-            {item.task}
-          </Text>
-          <TouchableOpacity
-            style={[styles.circleButton, item.status === 'completed' && styles.circleButtonCompleted]}
-            onPress={() => markTaskAsPending(item.id)}
-          />
-        </View>
-      )}
-    />
+      {/* Medium Tasks */}
+      <View style={styles.taskListContainer}>
+        <Text style={styles.categoryHeader}>Medium Tasks</Text>
+        <FlatList
+          data={mediumTasks}
+          keyExtractor={(item) => item.task_id.toString()}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              onPress={() => navigation.navigate('TaskDetails', { taskId: item.task_id })}
+            >
+              <View style={[styles.taskContainer, item.status === 'completed' && styles.taskCompleted]}>
+                <TouchableOpacity
+                  onPress={() => markTaskAsCompleted(item.task_id)} // Mark task as completed when tapped
+                >
+                  <Ionicons
+                    name={item.status === 'completed' ? 'checkbox' : 'checkbox-outline'} // Change icon based on completion status
+                    size={24}
+                    color={item.status === 'completed' ? '#28a745' : '#6c757d'}
+                    style={styles.taskIcon}
+                  />
+                </TouchableOpacity>
+                <Text style={[styles.taskText, item.status === 'completed' && styles.completedTaskText]}>
+                  {item.title}
+                </Text>
+                <Text style={styles.dueDateText}>{calculateRemainingDays(item.due_date)}</Text>
+              </View>
+            </TouchableOpacity>
+          )}
+        />
+      </View>
 
-   
-  </View>
+      {/* Hard Tasks */}
+      <View style={styles.taskListContainer}>
+        <Text style={styles.categoryHeader}>Hard Tasks</Text>
+        <FlatList
+          data={hardTasks}
+          keyExtractor={(item) => item.task_id.toString()}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              onPress={() => navigation.navigate('TaskDetails', { taskId: item.task_id })}
+            >
+              <View style={[styles.taskContainer, item.status === 'completed' && styles.taskCompleted]}>
+                <TouchableOpacity
+                  onPress={() => markTaskAsCompleted(item.task_id)} // Mark task as completed when tapped
+                >
+                  <Ionicons
+                    name={item.status === 'completed' ? 'checkbox' : 'checkbox-outline'} // Change icon based on completion status
+                    size={24}
+                    color={item.status === 'completed' ? '#28a745' : '#6c757d'}
+                    style={styles.taskIcon}
+                  />
+                </TouchableOpacity>
+                <Text style={[styles.taskText, item.status === 'completed' && styles.completedTaskText]}>
+                  {item.title}
+                </Text>
+                <Text style={styles.dueDateText}>{calculateRemainingDays(item.due_date)}</Text>
+              </View>
+            </TouchableOpacity>
+          )}
+        />
+      </View>
+
+    </View>
   );
 }
 
-
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1,
-    backgroundColor: '#f8f9fa',
-    padding: 16,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 20,
-    marginTop: 10
-    },
-    
-  headerText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    },
-
-  taskContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', padding: 15, borderRadius: 10, marginVertical: 5 },
+  container: { flex: 1, backgroundColor: '#f8f9fa', padding: 16 },
+  header: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginBottom: 20 },
+  headerText: { fontSize: 24, fontWeight: 'bold' },
+  taskListContainer: { marginBottom: 20 },
+  categoryHeader: { fontSize: 20, fontWeight: 'bold', marginVertical: 10 },
+  taskContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#e1e7ed', padding: 15, borderRadius: 10, marginVertical: 5 },
   taskIcon: { marginRight: 10 },
-  taskText: { fontSize: 16,  flex: 1 },
-  completedTaskText: { textDecorationLine: 'line-through' },
-  circleButton: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: 'white', marginRight: 15 },
-  circleButtonCompleted: { backgroundColor: '#6c757d' },
-  taskCompleted: { backgroundColor: '#e1e7ed' },
-  modalBackground: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0, 0, 0, 0.5)' },
-  modalContainer: { width: '80%', padding: 20, backgroundColor: 'white', borderRadius: 10, alignItems: 'center' },
+  taskText: { fontSize: 16, fontWeight: 'bold', flex: 1 },
+  completedTaskText: { textDecorationLine: 'line-through', color: 'gray' },
+  taskCompleted: { backgroundColor: '#d3f8e2' },
+  dueDateText: { fontSize: 14, color: '#6c757d' },
 });

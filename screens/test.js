@@ -1,181 +1,184 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, TextInput, Pressable, Alert, FlatList, TouchableOpacity, Image, Modal } from 'react-native';
-import { useSQLiteContext } from 'expo-sqlite';
-import { Ionicons } from '@expo/vector-icons';
-import { useFocusEffect } from '@react-navigation/native'; // Import useFocusEffect
+import React, { useState, useEffect } from "react";
+import { View, Text, StyleSheet, Image } from "react-native";
+import { useSQLiteContext } from "expo-sqlite"; // Adjust based on your SQLite setup
+import { useFocusEffect } from '@react-navigation/native';
 
-
-
-export default function MyTasks() {
-
+const Profile = () => {
   const db = useSQLiteContext();
-  const [task, setTask] = useState('');
-  const [tasks, setTasks] = useState([]);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [pendingCount, setPendingCount] = useState(0);
-  
-  const fetchTasks = async () => {
+  const [profile, setProfile] = useState(null);
+
+  // Function to check and update the level based on experience
+const updateLevelIfNeeded = async () => {
+  const xpThreshold = 100;
+
+  try {
+    // Fetch the current user data (assuming there's one user in the `users` table)
+    const result = await db.getAllAsync("SELECT * FROM users");
+
+    if (result.length > 0) {
+      const user = result[0]; // Assuming there's only one user in the db
+      
+      let newLevel = user.level;
+      let newExperience = user.experience;
+
+      // If the experience exceeds the threshold, calculate the new level and reset experience
+      if (user.experience >= xpThreshold) {
+        newLevel = user.level + 1;  // Calculate new level
+        newExperience = user.experience % xpThreshold; // Reset experience after leveling up
+      }
+
+      // Only update if level or experience has changed
+      if (newLevel !== user.level || newExperience !== user.experience) {
+        await db.runAsync(
+          `UPDATE users SET level = ?, experience = ? WHERE user_id = ?`,
+          [newLevel, newExperience, 1] // Assuming user_id = 1
+        );
+        console.log(`Level up! New level: ${newLevel}, XP: ${newExperience}`);
+      }
+    }
+  } catch (error) {
+    console.error("Error updating level:", error);
+  }
+};
+
+
+  // Fetch user data from the `users` table
+  const fetchProfile = async () => {
     try {
-      const result = await db.getAllAsync('SELECT * FROM tasks WHERE status = ?', ['pending']);
-      setTasks(result);
+      const result = await db.getAllAsync("SELECT * FROM users");
+
+      if (result.length > 0) {
+        const user = result[0];
+        setProfile(user);
+
+      }
+      console.log(result); // Log the fetched result
     } catch (error) {
-      console.log('Error fetching tasks:', error);
+      console.error("Error fetching profile:", error);
     }
   };
 
- 
-  const countPendingTasks = async () => {
-    try {
-      const result = await db.getAllAsync('SELECT COUNT(*) as count FROM tasks WHERE status = ?', ['pending']);
-      setPendingCount(result[0].count); // Update pending count state
-    } catch (error) {
-      console.log('Error counting pending tasks:', error);
-    }
-  };
+
+
+  useEffect(() => {
+   
+
+    // Set up an interval to check and update the level every 10 seconds
+    const intervalId = setInterval(() => {
+      updateLevelIfNeeded(); // Check and update level periodically
+    }, 1000); // Every 1 second
+
+    // Cleanup interval when the component is unmounted
+    return () => clearInterval(intervalId);
+  }, []);
 
   useFocusEffect(
     React.useCallback(() => {
-      fetchTasks();
-      countPendingTasks();
+      fetchProfile();
     }, [])
   );
 
-
-  const addTaskToDb = async (taskText) => {
-    if (!taskText) {
-      Alert.alert('Please enter a task.');
-      return;
-    }
-    try {
-      await db.runAsync('INSERT INTO tasks (task, status) VALUES (?, ?)', [taskText, 'pending']);
-      fetchTasks();
-      setTask('');
-    } catch (error) {
-      console.log('Error inserting task:', error);
-    }
-  };
-
-  const handleAddTask = () => {
-    if (task.length > 0) {
-      addTaskToDb(task);
-      setModalVisible(false); // Close modal after adding task
-    }
-  };
-
-  const markTaskAsCompleted = async (id) => {
-    try {
-      await db.runAsync('UPDATE tasks SET status = ? WHERE id = ?', ['completed', id]);
-      fetchTasks();
-    } catch (error) {
-      console.log('Error updating task:', error);
-    }
-  };
+  if (!profile) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.loadingText}>Loading profile...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
-   
-    <View style={styles.header}>
-      <Image source={require('../assets/Profile.png')} style={styles.profileImage} />
-      <Text style={styles.welcomeText}>Welcome!</Text>
-      <View style={styles.pointsContainer}>
-        <Text style={styles.pointsText}>182</Text>
-        <Ionicons name="cash" size={20} color="gold" />
-      </View>
-    </View>
+      {/* Profile Picture */}
+      <Image
+        source={require("../assets/Profile.png")} // Replace with the actual profile picture
+        style={styles.profileImage}
+      />
 
-    
+      {/* Name */}
+      <Text style={styles.name}>{profile.username}</Text>
 
-    {/* Modal for adding tasks */}
-    <Modal
-      animationType="slide"
-      transparent={true}
-      visible={modalVisible}
-      onRequestClose={() => setModalVisible(false)}
-    >
-      <View style={styles.modalBackground}>
-        <View style={styles.modalContainer}>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter a task"
-            value={task}
-            onChangeText={(text) => setTask(text)}
-          />
-          <View style={styles.btnContainer}>
-            <Pressable style={styles.cancelButton} onPress={() => setModalVisible(false)}>
-              <Text style={styles.buttonText}>Cancel</Text>
-            </Pressable>
-            <Pressable style={styles.addButton} onPress={handleAddTask}>
-              <Text style={styles.buttonText}>Add Task</Text>
-            </Pressable>
-          </View>
-        </View>
-      </View>
-    </Modal>
+      {/* Title */}
+      <Text style={styles.title}>{profile.title || "No title"}</Text>
 
-    <View style={styles.contentWrapper}>
-      <View style={styles.progressContainer}>
-        <Text style={styles.progressText}> {pendingCount}</Text>
-        <Text style={styles.taskText}>Ongoing Quest/s</Text> 
-      </View>
-      <View style={styles.progressContainer}>
-        <Text style={styles.progressText}> {pendingCount}</Text>
-        <Text style={styles.taskText}>Completed Quest/s</Text> 
-      </View>
-    </View>
-     
-     {/* Button to open modal */}
-     <Pressable style={styles.addButton} onPress={() => setModalVisible(true)}>
-        <Text style={styles.buttonText}>+ Quest</Text>
-      </Pressable>
-    {/* Task List */}
-    <FlatList
-      data={tasks}
-      keyExtractor={(item) => item.id.toString()}
-      renderItem={({ item }) => (
-        <View style={[styles.taskContainer, item.status === 'completed' && styles.taskCompleted]}>
-          <Ionicons name="calendar" size={24} color="white" style={styles.taskIcon} />
-          <Text style={[styles.taskText, item.status === 'completed' && styles.completedTaskText]}>
-            {item.task}
-          </Text>
-          <TouchableOpacity
-            style={[styles.circleButton, item.status === 'completed' && styles.circleButtonCompleted]}
-            onPress={() => markTaskAsCompleted(item.id)}
+      {/* Level and Experience */}
+      <View style={styles.levelContainer}>
+        <Text style={styles.levelText}>Level {profile.level}</Text>
+
+        {/* Progress Bar */}
+        <View style={styles.progressBarBackground}>
+          <View
+            style={[
+              styles.progressBarFill,
+              { width: `${profile.experience}%` }, // Use experience as progress
+            ]}
           />
         </View>
-      )}
-    />
 
-   
-  </View>
+        <Text style={styles.expText}>
+          {Math.floor(profile.experience % 100)}/100 XP
+        </Text>
+      </View>
+    </View>
   );
-}
-
+};
 
 const styles = StyleSheet.create({
-  container: { backgroundColor: '#232430', padding: 20,  flex: 1 },
-  header: { flexDirection: 'row', alignItems: 'center', marginBottom: 10, marginTop: 20 },
-  profileImage: { width: 70, height: 70, borderRadius: 40, borderWidth: 2, borderColor:  'white'},
-  welcomeText: { fontSize: 25, fontWeight: 'bold', marginLeft: 10, color: 'white'},
-  pointsContainer: { flexDirection: 'row', alignItems: 'center', marginLeft: 'auto', backgroundColor: '#fff', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20 },
-  pointsText: { fontSize: 15, color: '#333', marginRight: 5, fontWeight: 'bold',},
-
-  contentWrapper: { flexDirection: 'row',  marginVertical: 5,},
-  progressContainer: {backgroundColor: '#fedf66', alignItems: 'center', justifyContent: 'center', height: 120, width: '45%' , padding: 15, borderRadius: 10, },
-  progress: {flexDirection: 'row', alignItems: 'center',},
-  progressText:{fontSize: 45, color: 'white', fontWeight: 'bold', marginRight: 10},
-
-  input: { width: '100%', padding: 10, borderWidth: 1, marginVertical: 5, height: 50, borderColor: '#e3eaf2', borderRadius: 7, backgroundColor: '#fff' },
-  btnContainer: {flexDirection: 'row'},
-  addButton: {width: '100%', height: 45, backgroundColor: '#4f6266', padding: 10, borderRadius: 10, alignItems: 'center',marginVertical: 5, },
-  cancelButton: { backgroundColor: 'gray', padding: 10, marginVertical: 10, borderRadius: 10, alignItems: 'center', marginRight: 120 },
-  buttonText: { color: 'white', fontSize: 18 },
-  taskContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fd985f', padding: 15, borderRadius: 10, marginVertical: 5 },
-  taskIcon: { marginRight: 10 },
-  taskText: { fontSize: 16, color: 'white', flex: 1 },
-  completedTaskText: { textDecorationLine: 'line-through', color: 'gray' },
-  circleButton: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: 'white', marginRight: 15 },
-  circleButtonCompleted: { backgroundColor: '#6c64fe' },
-  taskCompleted: { backgroundColor: '#d3f8e2' },
-  modalBackground: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0, 0, 0, 0.5)' },
-  modalContainer: { width: '80%', padding: 20, backgroundColor: 'white', borderRadius: 10, alignItems: 'center' },
+  container: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 20,
+    backgroundColor: "#f3f3f3",
+  },
+  profileImage: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    marginBottom: 20,
+  },
+  name: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 10,
+    color: "#333",
+  },
+  title: {
+    fontSize: 18,
+    fontStyle: "italic",
+    marginBottom: 20,
+    color: "#777",
+  },
+  levelContainer: {
+    alignItems: "center",
+    marginTop: 20,
+    width: "100%",
+  },
+  levelText: {
+    fontSize: 18,
+    fontWeight: "600",
+    marginBottom: 10,
+    color: "#555",
+  },
+  progressBarBackground: {
+    width: 300,
+    height: 15,
+    backgroundColor: "#ddd",
+    borderRadius: 10,
+    overflow: "hidden",
+    marginBottom: 5,
+  },
+  progressBarFill: {
+    height: "100%",
+    backgroundColor: "#4caf50",
+  },
+  expText: {
+    fontSize: 14,
+    color: "#777",
+  },
+  loadingText: {
+    fontSize: 16,
+    color: "#666",
+  },
 });
+
+export default Profile;
