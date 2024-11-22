@@ -101,7 +101,11 @@ export default function MyTasks({ navigation }) {
       <View style={styles.header}>
         <Text style={styles.headerText}>My Quests</Text>
       </View>
-
+      <TouchableOpacity
+              onPress={() => navigation.navigate('CompletedTasks')}
+            >
+      <Text style={styles}>Completed</Text>      
+      </TouchableOpacity>
       {/* Easy Tasks */}
       <View style={styles.taskListContainer}>
         <Text style={styles.categoryHeader}>Easy Quests</Text>

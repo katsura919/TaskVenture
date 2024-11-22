@@ -64,6 +64,11 @@ export default function MyTasks({ navigation }) {
       <View style={styles.header}>
         <Text style={styles.headerText}>My Quests</Text>
       </View>
+      
+      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back" size={24} color="#fff" />
+          <Text style={styles.backButtonText}>Back</Text>
+        </TouchableOpacity>
 
       {/* Easy Tasks */}
       <View style={styles.taskListContainer}>

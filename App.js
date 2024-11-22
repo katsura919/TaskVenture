@@ -1,7 +1,7 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, Alert } from 'react-native';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, Alert, Image } from 'react-native';
 import { SQLiteProvider } from 'expo-sqlite';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, useIsFocused } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useState } from 'react';
@@ -13,8 +13,12 @@ import MyTasks from './screens/MyTasks';
 import TaskDetails from './screens/TaskDetails';
 import CompletedQuests from './screens/CompletedQuests';
 import Profile from './screens/Profile';
-import Settings from './screens/Settings';
 import ChangePassword from './screens/ChangePassword';
+import Achievements from './screens/Achievements';
+import Test from './screens/Test';
+
+
+
 
 // Initialize the database
 const getRandomName = () => {
@@ -27,17 +31,22 @@ const initializeDatabase = async (db) => {
   try {
     await db.execAsync(`
       PRAGMA journal_mode = WAL;
-
-              
+      
         CREATE TABLE IF NOT EXISTS users (
           user_id INTEGER PRIMARY KEY,  
           username TEXT DEFAULT 'Adventurer',
           experience INTEGER DEFAULT 0,
+          profile_picture TEXT,
           level INTEGER DEFAULT 1,
           title TEXT
         );
 
-       
+        CREATE TABLE IF NOT EXISTS completed_achievements (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          title TEXT NOT NULL,
+          icon TEXT NOT NULL
+        );
+
         CREATE TABLE IF NOT EXISTS tasks (
           task_id INTEGER PRIMARY KEY AUTOINCREMENT,
           title TEXT,
@@ -47,8 +56,7 @@ const initializeDatabase = async (db) => {
           due_date DATETIME,
           difficulty TEXT CHECK (difficulty IN ('easy', 'medium', 'hard'))  
         );
-
-       
+      
         CREATE TABLE IF NOT EXISTS subtasks (
           subtask_id INTEGER PRIMARY KEY AUTOINCREMENT,
           task_id INTEGER,  
@@ -58,8 +66,6 @@ const initializeDatabase = async (db) => {
           due_date DATETIME,
           FOREIGN KEY (task_id) REFERENCES tasks(task_id) ON DELETE CASCADE
         );
-
-
     `);
     
     // Check if there are any users in the table
@@ -99,9 +105,9 @@ function MyTabs() {
 
           if (route.name === 'Home') {
             iconName = focused ? 'home' : 'home-outline';
-          } else if (route.name === 'Stats') {
+          } else if (route.name === 'Quest Log') {
             iconName = focused ? 'stats-chart' : 'stats-chart-outline';
-          } else if (route.name === 'MyTask') {
+          } else if (route.name === 'Quest Board') {
             iconName = focused ? 'list' : 'list-outline';
           } else if (route.name === 'Profile') {
             iconName = focused ? 'person' : 'person-outline';
@@ -110,41 +116,55 @@ function MyTabs() {
           return <Ionicons name={iconName} size={24} color={color} />;
         },
         tabBarShowLabel: true,
-        tabBarStyle: { backgroundColor: '#ffffff' },
-        tabBarActiveTintColor: '#5B4CF0',
+        tabBarStyle: { backgroundColor: '#1b181c', height: 50, borderTopColor:'#1b181c' },
+        tabBarActiveTintColor: 'white',
         tabBarInactiveTintColor: '#8e8e93',
         headerShown: false,
+        borderTopWidth: 0, // Remove border
+        elevation: 0, // Remove shadow for Android
+        shadowOpacity: 0, // Remove shadow for iOS
+        
+        
       })}
     >
       <Tab.Screen name="Home" component={Home} />
-      <Tab.Screen name="Stats" component={CompletedQuests} />
+      <Tab.Screen name="Quest Log" component={Achievements} />
 
       {/* Custom Center Button */}
       <Tab.Screen
         name="CenterButton"
         component={AddTask}
         options={{
-          tabBarButton: (props) => (
-            <TouchableOpacity
-              {...props}
-              style={{
-                top: 5,
-                justifyContent: 'center',
-                alignItems: 'center',
-                width: 40,
-                height: 40,
-                borderRadius: 10, // Adjust this to create rounded square shape
-                backgroundColor: '#5B4CF0',
-                marginHorizontal:20,
-              }}
-            >
-              <Ionicons name="add" size={28} color="white" />
-            </TouchableOpacity>
-          ),
+          tabBarButton: (props) => {
+            const isFocused = useIsFocused(); // Check if this tab is focused
+
+            return (
+              <TouchableOpacity
+                {...props}
+                style={{
+                  top: 5,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  width: 40,
+                  height: 40,
+                  marginHorizontal: 20,
+                }}
+              >
+                <Image
+                  source={
+                    isFocused
+                      ? require('./assets/plus-shield-focus.png') // Image for the focused state
+                      : require('./assets/plus-shield.png') // Default image 
+                  }
+                  style={{ width: 40, height: 40, alignItems: 'center'}}
+                />
+              </TouchableOpacity>
+            );
+          },
         }}
       />
 
-      <Tab.Screen name="MyTask" component={MyTasks} />
+      <Tab.Screen name="Quest Board" component={MyTasks} />
       <Tab.Screen name="Profile" component={Profile} />
     </Tab.Navigator>
   );
@@ -159,6 +179,7 @@ export default function App() {
           <Stack.Screen name='HomeTabs' component={MyTabs} />
           <Stack.Screen name='ChangePassword' component={ChangePassword} />
           <Stack.Screen name='TaskDetails' component={TaskDetails} />
+          <Stack.Screen name='CompletedTasks' component={CompletedQuests} />
         </Stack.Navigator>
       </NavigationContainer>
     </SQLiteProvider>

@@ -1,14 +1,18 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, Image } from "react-native";
+import { View, Text, StyleSheet, Image, TouchableOpacity, Modal, FlatList, TextInput, Button} from "react-native";
 import { useSQLiteContext } from "expo-sqlite"; // Adjust based on your SQLite setup
 import { useFocusEffect } from '@react-navigation/native';
 
 const Profile = () => {
   const db = useSQLiteContext();
   const [profile, setProfile] = useState(null);
-
+  const [newName, setNewName] = useState(""); // New name state
+  const [profilePicture, setProfilePicture] = useState("");
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedTitle, setSelectedTitle] = useState("");
+  const [completedAchievements, setCompletedAchievements] = useState([]);
   // Function to check and update the level based on experience
-const updateLevelIfNeeded = async () => {
+  const updateLevelIfNeeded = async () => {
   const xpThreshold = 100;
 
   try {
@@ -39,8 +43,7 @@ const updateLevelIfNeeded = async () => {
   } catch (error) {
     console.error("Error updating level:", error);
   }
-};
-
+  };
 
   // Fetch user data from the `users` table
   const fetchProfile = async () => {
@@ -50,7 +53,14 @@ const updateLevelIfNeeded = async () => {
       if (result.length > 0) {
         const user = result[0];
         setProfile(user);
+        setNewName(user.username); // Initialize the name to the current name
+        setProfilePicture(user.profile_picture || "../assets/profile-img.png"); // Default image
+        setSelectedTitle(user.title || "No title");
 
+        // Fetch completed achievements for the user
+        const achievements = await db.getAllAsync("SELECT * FROM completed_achievements",);
+        setCompletedAchievements(achievements);
+        console.log(completedAchievements);
       }
       console.log(result); // Log the fetched result
     } catch (error) {
@@ -58,7 +68,10 @@ const updateLevelIfNeeded = async () => {
     }
   };
 
-
+  const achievementIcons = {
+    "dedicated.png": require("../assets/achievements/dedicated.png"),
+    "gladiator.png": require("../assets/avatars/gladiator.png"),
+  };
 
   useEffect(() => {
    
@@ -78,6 +91,82 @@ const updateLevelIfNeeded = async () => {
     }, [])
   );
 
+
+  const handleNameChange = async () => {
+    try {
+      if (newName.trim() === "") {
+        // Avoid saving empty names
+        return;
+      }
+
+      // Update the name in the database
+      await db.runAsync(
+        `UPDATE users SET username = ? WHERE user_id = ?`,
+        [newName, profile.user_id]
+      );
+
+      // Close the modal after updating the name
+      setModalVisible(false);
+
+      // Trigger the re-fetch to refresh the profile data
+      fetchProfile();
+    } catch (error) {
+      console.error("Error updating name:", error);
+    }
+  };
+
+   // List of images with unlock levels
+   const unlockableImages = [
+    { source: require("../assets/avatars/gladiator.png"), level: 1 },
+    { source: require("../assets/avatars/assasin.png"), level: 2 },
+    { source: require("../assets/avatars/astronaut.png"), level: 10 },
+  ];
+
+  const updateProfilePicture = async (imagePath) => {
+    try {
+      await db.runAsync(
+        `UPDATE users SET profile_picture = ? WHERE user_id = ?`,
+        [imagePath, 1] // Assuming user_id = 1
+      );
+      setProfilePicture(imagePath);
+      setModalVisible(false);
+    } catch (error) {
+      console.error("Error updating profile picture:", error);
+    }
+  };
+  
+  const isUnlocked = (requiredLevel) => {
+    return profile?.level >= requiredLevel;
+  };
+
+  const [availableTitles, setAvailableTitles] = useState([
+    { title: "Beginner", level: 1 },
+    { title: "Intermediate", level: 1},
+    { title: "Advanced", level: 10 },
+    { title: "Master", level: 20 },
+  ]);
+
+  const updateProfileTitle = async (newTitle) => {
+    try {
+      await db.runAsync(
+        `UPDATE users SET title = ? WHERE user_id = ?`,
+        [newTitle, 1] // Assuming user_id = 1
+      );
+      setSelectedTitle(newTitle);
+      setModalVisible(false);
+    } catch (error) {
+      console.error("Error updating profile title:", error);
+    }
+  };
+
+  const handleTitleSelection = (title) => {
+    // Check if the title is unlocked based on the user's level
+    if (profile.level >= title.level) {
+      updateProfileTitle(title.title);
+      fetchProfile();
+    }
+  };
+
   if (!profile) {
     return (
       <View style={styles.container}>
@@ -86,13 +175,17 @@ const updateLevelIfNeeded = async () => {
     );
   }
 
+ 
+  
   return (
     <View style={styles.container}>
       {/* Profile Picture */}
-      <Image
-        source={require("../assets/Profile.png")} // Replace with the actual profile picture
-        style={styles.profileImage}
-      />
+      <TouchableOpacity onPress={() => setModalVisible(true)}>
+        <Image source={profilePicture} style={styles.profileImage} />
+        <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.editIconContainer}>
+          <Text style={styles.editIcon}>✏️</Text>
+        </TouchableOpacity>
+      </TouchableOpacity>
 
       {/* Name */}
       <Text style={styles.name}>{profile.username}</Text>
@@ -118,35 +211,150 @@ const updateLevelIfNeeded = async () => {
           {Math.floor(profile.experience % 100)}/100 XP
         </Text>
       </View>
+      
+      {/* Completed Achievements Section */}
+      <View style={styles.achievementsContainer}>
+        <Text style={styles.achievementsHeader}>Achievements</Text>
+        <FlatList
+            data={completedAchievements}
+            numColumns={3}
+            keyExtractor={(item) => item.achievement_id ? item.achievement_id.toString() : ''}
+            renderItem={({ item }) => {
+                
+              return (
+                <View style={styles.achievementItem}>
+                  <Image
+                  source={achievementIcons[item.icon]}
+                  style={styles.achievementIcon}
+                  />
+                  <Text style={styles.achievementTitle}>{item.title}</Text>
+                </View>
+              );
+            }}
+          />
+
+
+
+      </View>
+
+      {/* Modal for Image Selection */}
+      <Modal
+            visible={modalVisible}
+            animationType="slide"
+            onRequestClose={() => setModalVisible(false)}
+            transparent={true}
+          >
+            <View style={styles.modalContainer}>
+              <View>
+                <TouchableOpacity onPress={() => setModalVisible(false)} style={styles.closeModal}>
+                  <Text style={styles.editIcon}>Close</Text>
+                </TouchableOpacity>
+              </View>
+
+               {/* Name Edit Section */}
+          <Text style={styles.editIcon}>Edit Name</Text>
+          <TextInput
+            style={styles.nameInput}
+            value={newName}
+            onChangeText={setNewName}
+            placeholder="Enter new name"
+            placeholderTextColor="#ccc"
+          />
+          <Button title="Save Name" onPress={handleNameChange} />
+
+              {/* Avatars Section */}
+              <Text style={styles.editIcon}>Avatars</Text>
+              <FlatList
+                data={unlockableImages}
+                keyExtractor={(item, index) => index.toString()}
+                numColumns={3}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    onPress={() =>
+                      isUnlocked(item.level) && updateProfilePicture(item.source)
+                    }
+                    disabled={!isUnlocked(item.level)}
+                    style={styles.imageOption}
+                  >
+                    {/* Image */}
+                    <Image source={item.source} style={styles.modalImage} />
+                    
+                    {/* Lock Overlay */}
+                    {!isUnlocked(item.level) && (
+                      <View style={styles.lockOverlay}>
+                        <Text style={styles.lockText}>🔒</Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                )}
+              />
+
+              {/* Titles Section */}
+              <Text style={styles.editIcon}>Titles</Text>
+              <FlatList
+                data={availableTitles}
+                keyExtractor={(item, index) => index.toString()}
+                numColumns={3}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    onPress={() => handleTitleSelection(item)}
+                    style={styles.titleOption}
+                  >
+                    <Text
+                      style={[
+                        styles.titleText,
+                        profile.level < item.level && styles.lockedTitle,
+                      ]}
+                    >
+                      {item.title} {profile.level < item.level && ""}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              />
+            </View>
+      </Modal>
+
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     alignItems: "center",
-    justifyContent: "center",
-    padding: 20,
-    backgroundColor: "#f3f3f3",
+    flex: 1,
+    backgroundColor: "#1b181c",
+    padding: 16,
   },
   profileImage: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: 150,
+    height: 150,
+    borderRadius: 75,
     marginBottom: 20,
+    position: 'relative'
+  },
+  editIconContainer: {
+    position: "absolute",
+    bottom: 10,
+    right: 10,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    borderRadius: 15,
+    padding: 5,
+  },
+  editIcon: {
+    color: "#fff",
+    fontSize: 16,
   },
   name: {
     fontSize: 24,
     fontWeight: "bold",
     marginBottom: 10,
-    color: "#333",
+    color: "#fff",
   },
   title: {
     fontSize: 18,
     fontStyle: "italic",
     marginBottom: 20,
-    color: "#777",
+    color: "#bbb",
   },
   levelContainer: {
     alignItems: "center",
@@ -157,12 +365,12 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "600",
     marginBottom: 10,
-    color: "#555",
+    color: "#fff",
   },
   progressBarBackground: {
     width: 300,
     height: 15,
-    backgroundColor: "#ddd",
+    backgroundColor: "#444",
     borderRadius: 10,
     overflow: "hidden",
     marginBottom: 5,
@@ -173,11 +381,95 @@ const styles = StyleSheet.create({
   },
   expText: {
     fontSize: 14,
-    color: "#777",
+    color: "#bbb",
   },
   loadingText: {
     fontSize: 16,
-    color: "#666",
+    color: "#fff",
+  },
+
+  modalContainer: {
+    padding: 20,
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "lightblue",
+  },
+  nameInput: {
+    width: 250,
+    height: 40,
+    backgroundColor: "#333",
+    borderRadius: 8,
+    color: "#fff",
+    paddingHorizontal: 10,
+    marginBottom: 10,
+  },
+  modalImage: {
+    width: 70,
+    height: 70,
+    borderRadius: 35, // Makes the image circular
+  },
+  imageOption: {
+    margin: 10,
+    position: "relative",
+  },
+  lockOverlay: {
+    position: "absolute",
+    width: 70,
+    height: 70,
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 35, // Ensures the overlay matches the circular image
+  },
+  lockText: {
+    fontSize: 24,
+    color: "#fff",
+  },
+  titleOption: {
+    padding: 10,
+    backgroundColor: "#333",
+    borderRadius: 5,
+    margin: 10,
+  },
+  titleText: {
+    color: "#fff",
+    fontSize: 18,
+  },
+  lockedTitle: {
+    color: "#888", // Use a different color to indicate locked titles
+  },
+
+  achievementsContainer: {
+    marginTop: 30,
+    width: "100%",
+    paddingHorizontal: 20,
+    alignItems: "center",
+  },
+  achievementsHeader: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#fff",
+    marginBottom: 10,
+  },
+  achievementItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    margin: 10,
+    flexDirection: 'column',
+    justifyContent: 'center',
+
+  },
+  achievementIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+ 
+  },
+  achievementTitle: {
+    fontSize: 13,
+    color: "#fff",
+   
   },
 });
 

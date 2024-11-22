@@ -1,64 +1,66 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, Image } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  Modal,
+  FlatList,
+} from "react-native";
 import { useSQLiteContext } from "expo-sqlite"; // Adjust based on your SQLite setup
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect } from "@react-navigation/native";
 
 const Profile = () => {
   const db = useSQLiteContext();
   const [profile, setProfile] = useState(null);
+  const [profilePicture, setProfilePicture] = useState("");
+  const [modalVisible, setModalVisible] = useState(false);
 
   // Function to check and update the level based on experience
-const updateLevelIfNeeded = async () => {
-  const xpThreshold = 100;
-
-  try {
-    // Fetch the current user data (assuming there's one user in the `users` table)
-    const result = await db.getAllAsync("SELECT * FROM users");
-
-    if (result.length > 0) {
-      const user = result[0]; // Assuming there's only one user in the db
-      
-      let newLevel = user.level;
-      let newExperience = user.experience;
-
-      // If the experience exceeds the threshold, calculate the new level and reset experience
-      if (user.experience >= xpThreshold) {
-        newLevel = user.level + 1;  // Calculate new level
-        newExperience = user.experience % xpThreshold; // Reset experience after leveling up
-      }
-
-      // Only update if level or experience has changed
-      if (newLevel !== user.level || newExperience !== user.experience) {
-        await db.runAsync(
-          `UPDATE users SET level = ?, experience = ? WHERE user_id = ?`,
-          [newLevel, newExperience, 1] // Assuming user_id = 1
-        );
-        console.log(`Level up! New level: ${newLevel}, XP: ${newExperience}`);
-      }
-    }
-  } catch (error) {
-    console.error("Error updating level:", error);
-  }
-};
-
-
-  // Fetch user data from the `users` table
+  const updateLevelIfNeeded = async () => {
+  };
+  
   const fetchProfile = async () => {
     try {
       const result = await db.getAllAsync("SELECT * FROM users");
-
       if (result.length > 0) {
         const user = result[0];
         setProfile(user);
-
+        setProfilePicture(user.profile_picture || "../assets/profile-img.png"); // Default image
       }
-      console.log(result); // Log the fetched result
     } catch (error) {
       console.error("Error fetching profile:", error);
     }
   };
 
 
+  // List of images with unlock levels
+  const unlockableImages = [
+    { source: require("../assets/avatars/gladiator.png"), level: 1 },
+    { source: require("../assets/avatars/assasin.png"), level: 2 },
+    { source: require("../assets/avatars/astronaut.png"), level: 10 },
+  ];
+
+  
+
+
+  const updateProfilePicture = async (imagePath) => {
+    try {
+      await db.runAsync(
+        `UPDATE users SET profile_picture = ? WHERE user_id = ?`,
+        [imagePath, 1] // Assuming user_id = 1
+      );
+      setProfilePicture(imagePath);
+      setModalVisible(false);
+    } catch (error) {
+      console.error("Error updating profile picture:", error);
+    }
+  };
+
+  const isUnlocked = (requiredLevel) => {
+    return profile?.level >= requiredLevel;
+  };
 
   useEffect(() => {
    
@@ -78,6 +80,8 @@ const updateLevelIfNeeded = async () => {
     }, [])
   );
 
+
+
   if (!profile) {
     return (
       <View style={styles.container}>
@@ -89,10 +93,9 @@ const updateLevelIfNeeded = async () => {
   return (
     <View style={styles.container}>
       {/* Profile Picture */}
-      <Image
-        source={require("../assets/Profile.png")} // Replace with the actual profile picture
-        style={styles.profileImage}
-      />
+      <TouchableOpacity onPress={() => setModalVisible(true)}>
+        <Image source={profilePicture} style={styles.profileImage} />
+      </TouchableOpacity>
 
       {/* Name */}
       <Text style={styles.name}>{profile.username}</Text>
@@ -118,35 +121,69 @@ const updateLevelIfNeeded = async () => {
           {Math.floor(profile.experience % 100)}/100 XP
         </Text>
       </View>
+
+      {/* Modal for Image Selection */}
+      <Modal
+        visible={modalVisible}
+        animationType="slide"
+        onRequestClose={() => setModalVisible(false)}
+        transparent={true}
+      >
+        <View style={styles.modalContainer}>
+          <FlatList
+            data={unlockableImages}
+            keyExtractor={(item, index) => index.toString()}
+            numColumns={2}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                onPress={() =>
+                  isUnlocked(item.level) && updateProfilePicture(item.source)
+                }
+                disabled={!isUnlocked(item.level)}
+                style={styles.imageOption}
+              >
+                {/* Image */}
+                <Image source={item.source} style={styles.modalImage} />
+                
+                {/* Lock Overlay */}
+                {!isUnlocked(item.level) && (
+                  <View style={styles.lockOverlay}>
+                    <Text style={styles.lockText}>🔒</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            )}
+          />
+        </View>
+      </Modal>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     alignItems: "center",
-    justifyContent: "center",
-    padding: 20,
-    backgroundColor: "#f3f3f3",
+    flex: 1,
+    backgroundColor: "#1b181c",
+    padding: 16,
   },
   profileImage: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: 150,
+    height: 150,
+    borderRadius: 75,
     marginBottom: 20,
   },
   name: {
     fontSize: 24,
     fontWeight: "bold",
     marginBottom: 10,
-    color: "#333",
+    color: "#fff",
   },
   title: {
     fontSize: 18,
     fontStyle: "italic",
     marginBottom: 20,
-    color: "#777",
+    color: "#bbb",
   },
   levelContainer: {
     alignItems: "center",
@@ -157,12 +194,12 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "600",
     marginBottom: 10,
-    color: "#555",
+    color: "#fff",
   },
   progressBarBackground: {
     width: 300,
     height: 15,
-    backgroundColor: "#ddd",
+    backgroundColor: "#444",
     borderRadius: 10,
     overflow: "hidden",
     marginBottom: 5,
@@ -173,11 +210,44 @@ const styles = StyleSheet.create({
   },
   expText: {
     fontSize: 14,
-    color: "#777",
+    color: "#bbb",
   },
   loadingText: {
     fontSize: 16,
-    color: "#666",
+    color: "#fff",
+  },
+
+  modalContainer: {
+    flex: 1,
+  
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "blue",
+  },
+  modalImage: {
+    width: 500,
+    height: 500,
+    margin: 10,
+    borderRadius: 120, // Makes the image circular
+  },
+  imageOption: {
+    margin: 10,
+    position: "relative",
+  },
+  lockOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    width: 100,
+    height: 100,
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 50, // Ensures the overlay matches the circular image
+  },
+  lockText: {
+    fontSize: 24,
+    color: "#fff",
   },
 });
 

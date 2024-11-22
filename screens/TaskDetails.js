@@ -219,22 +219,38 @@ export default function TaskDetails({ route, navigation }) {
             <Text style={styles.buttonText}>Add Subtask</Text>
           </TouchableOpacity>
 
+         
+
           <FlatList
             data={subtasks}
-            keyExtractor={(item) => item.subtask_id.toString()}
+            keyExtractor={(item) => (typeof item.subtask_id === 'number' ? item.subtask_id.toString() : 'defaultKey')}
             renderItem={({ item }) => (
               <View style={styles.subtaskContainer}>
+        
+                <TouchableOpacity onPress={() => toggleSubtaskStatus(item.subtask_id, item.status)}>
+                  <Ionicons
+                    name={item.status === 'completed' ? 'checkbox' : 'checkbox-outline'} based on status
+                    size={20}
+                    color={item.status === 'completed' ? '#4caf50' : '#999'}
+                  />
+                </TouchableOpacity>
+
+          
                 <TouchableOpacity onPress={() => toggleSubtaskStatus(item.subtask_id, item.status)}>
                   <Text style={[styles.subtaskText, item.status === 'completed' && styles.completed]}>
                     {item.subtask_title}
                   </Text>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => deleteSubtask(item.subtask_id)}>
-                  <Ionicons name="trash-outline" size={20} color="#f44336" />
+
+         
+                <TouchableOpacity  onPress={() => deleteSubtask(item.subtask_id)}>
+                  <Ionicons style={styles.deleteSubtask} name="trash-outline" size={20} color="#f44336" />
                 </TouchableOpacity>
               </View>
             )}
           />
+
+
         </>
       ) : (
         <Text>Loading...</Text>
@@ -261,8 +277,12 @@ const styles = StyleSheet.create({
   calendarButton: { padding: 8 },
   clockButton: { padding: 8 },
   dateText: { fontSize: 16 },
-  subtaskContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  subtaskText: { fontSize: 16 },
+  subtaskContainer: { flexDirection: 'row', width: '100%', alignItems: 'center', justifyContent: 'space-around'},
+  subtaskText: { fontSize: 16,  },
   completed: { textDecorationLine: 'line-through' },
   button: { backgroundColor: '#4CAF50', padding: 10, marginBottom: 16, alignItems: 'center' },
+  deleteSubtask:{
+    display: 'flex',
+    justifyContent: 'flex-end'
+  }
 });
