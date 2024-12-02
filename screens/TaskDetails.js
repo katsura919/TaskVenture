@@ -12,7 +12,7 @@ export default function TaskDetails({ route, navigation }) {
   const [subtasks, setSubtasks] = useState([]);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [difficulty, setDifficulty] = useState('easy');
+  const [difficulty, setDifficulty] = useState('Easy');
   const [dueDate, setDueDate] = useState(null);
   const [dueTime, setDueTime] = useState(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -27,7 +27,7 @@ export default function TaskDetails({ route, navigation }) {
         setTask(result);
         setTitle(result.title || ''); // Default to empty string if no title
         setDescription(result.description || ''); // Default to empty string if no description
-        setDifficulty(result.difficulty || 'easy');
+        setDifficulty(result.difficulty || 'Easy');
         if (result.due_date) {
           const dueDateTime = new Date(result.due_date);
           setDueDate(dueDateTime);
@@ -126,7 +126,7 @@ export default function TaskDetails({ route, navigation }) {
   };
 
   const formatDueTime = (time) => {
-    if (!time) return '';
+    if (!time) return 'Not Set';
     return time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
@@ -134,12 +134,12 @@ export default function TaskDetails({ route, navigation }) {
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color="#fff" />
+          <Ionicons name="arrow-back" size={24} color="#7F8C8D" />
           <Text style={styles.backButtonText}>Back</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.editSaveButton} onPress={isEditing ? updateTaskDetails : () => setIsEditing(true)}>
-          <Text style={styles.buttonText}>{isEditing ? 'Save Changes' : 'Edit Task'}</Text>
+          <Text style={styles.buttonText}>{isEditing ? 'Save Changes' : 'Edit'}</Text>
         </TouchableOpacity>
       </View>
 
@@ -165,29 +165,27 @@ export default function TaskDetails({ route, navigation }) {
 
           {/* Difficulty Picker */}
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>Difficulty:   </Text>
-            {isEditing ? (
-              <Picker
-                selectedValue={difficulty}
-                onValueChange={(itemValue) => setDifficulty(itemValue)}
-                style={styles.picker}
-              >
-                <Picker.Item label="Easy" value="easy" />
-                <Picker.Item label="Medium" value="medium" />
-                <Picker.Item label="Hard" value="hard" />
-              </Picker>
-            ) : (
-              <Text style={styles.difficultyText}>{difficulty}</Text>
-            )}
+            <Text style={styles.label}>Difficulty   </Text>
+            <View style={styles.pickerContainer}>
+              {isEditing ? (
+                <Picker
+                  selectedValue={difficulty}
+                  onValueChange={(itemValue) => setDifficulty(itemValue)}
+                  style={styles.picker}
+                >
+                  <Picker.Item label="Easy" value="Easy" />
+                  <Picker.Item label="Medium" value="Medium" />
+                  <Picker.Item label="Hard" value="Hard" />
+                </Picker>
+              ) : (
+                <Text style={styles.difficultyText}>{difficulty}</Text>
+              )}
+            </View>
           </View>
 
           <View style={styles.dateTimeContainer}>
-            <Text style={styles.dateText}>Due Date: {formatDueDate(dueDate)}</Text>
-            {isEditing && (
-              <TouchableOpacity style={styles.calendarButton} onPress={() => setShowDatePicker(true)}>
-                <Ionicons name="calendar-outline" size={24} color="#4CAF50" />
-              </TouchableOpacity>
-            )}
+            <Text style={styles.dateText}>Due Date </Text>
+            <Text style={styles.dateValue} onPress={() => setShowDatePicker(true)}>{formatDueDate(dueDate)}</Text>
           </View>
 
           {showDatePicker && isEditing && (
@@ -196,12 +194,8 @@ export default function TaskDetails({ route, navigation }) {
 
           {dueDate && (
             <View style={styles.dateTimeContainer}>
-              <Text style={styles.dateText}>Due Time: {formatDueTime(dueTime)}</Text>
-              {isEditing && (
-                <TouchableOpacity style={styles.clockButton} onPress={() => setShowTimePicker(true)}>
-                  <Ionicons name="time-outline" size={24} color="#4CAF50" />
-                </TouchableOpacity>
-              )}
+              <Text style={styles.dateText}>Time </Text>
+              <Text style={styles.timeValue} onPress={() => setShowTimePicker(true)}>{formatDueTime(dueTime)}</Text>
             </View>
           )}
 
@@ -226,29 +220,30 @@ export default function TaskDetails({ route, navigation }) {
             keyExtractor={(item) => (typeof item.subtask_id === 'number' ? item.subtask_id.toString() : 'defaultKey')}
             renderItem={({ item }) => (
               <View style={styles.subtaskContainer}>
-        
-                <TouchableOpacity onPress={() => toggleSubtaskStatus(item.subtask_id, item.status)}>
-                  <Ionicons
-                    name={item.status === 'completed' ? 'checkbox' : 'checkbox-outline'} based on status
-                    size={20}
-                    color={item.status === 'completed' ? '#4caf50' : '#999'}
-                  />
-                </TouchableOpacity>
+                {/* Left Section: Checkbox and Title */}
+                <View style={styles.subtaskLeft}>
+                  <TouchableOpacity onPress={() => toggleSubtaskStatus(item.subtask_id, item.status)}>
+                    <Ionicons
+                      name={item.status === 'completed' ? 'checkbox' : 'checkbox-outline'}
+                      size={20}
+                      color={item.status === 'completed' ? '#4caf50' : '#7F8C8D'}
+                    />
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => toggleSubtaskStatus(item.subtask_id, item.status)}>
+                    <Text style={[styles.subtaskText, item.status === 'completed' && styles.completed]}>
+                      {item.subtask_title}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
 
-          
-                <TouchableOpacity onPress={() => toggleSubtaskStatus(item.subtask_id, item.status)}>
-                  <Text style={[styles.subtaskText, item.status === 'completed' && styles.completed]}>
-                    {item.subtask_title}
-                  </Text>
-                </TouchableOpacity>
-
-         
-                <TouchableOpacity  onPress={() => deleteSubtask(item.subtask_id)}>
-                  <Ionicons style={styles.deleteSubtask} name="trash-outline" size={20} color="#f44336" />
+                {/* Right Section: Delete Icon */}
+                <TouchableOpacity style={styles.deleteSubtask} onPress={() => deleteSubtask(item.subtask_id)}>
+                  <Ionicons name="trash-outline" size={20} color="#7F8C8D" />
                 </TouchableOpacity>
               </View>
             )}
           />
+
 
 
         </>
@@ -260,29 +255,166 @@ export default function TaskDetails({ route, navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16 },
-  header: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 },
-  backButton: { flexDirection: 'row', alignItems: 'center' },
-  backButtonText: { marginLeft: 8, color: '#1b1c1c' },
-  editSaveButton: { justifyContent: 'center', alignItems: 'center', backgroundColor: '#4CAF50' },
-  buttonText: { color: '#fff', fontSize: 16 },
-  headerText: { fontSize: 24, fontWeight: 'bold', marginBottom: 16 },
-  input: { borderBottomWidth: 1, padding: 8, marginBottom: 16 },
-  editable: { borderColor: '#4CAF50' },
-  inputContainer: { marginBottom: 16, flexDirection: 'row', alignItems: 'center'},
-  label: { fontSize: 16,  },
-  picker: { height: 50, width: '100%' },
-  difficultyText: { fontSize: 18 },
-  dateTimeContainer: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16, alignItems: 'center' },
-  calendarButton: { padding: 8 },
-  clockButton: { padding: 8 },
-  dateText: { fontSize: 16 },
-  subtaskContainer: { flexDirection: 'row', width: '100%', alignItems: 'center', justifyContent: 'space-around'},
-  subtaskText: { fontSize: 16,  },
-  completed: { textDecorationLine: 'line-through' },
-  button: { backgroundColor: '#4CAF50', padding: 10, marginBottom: 16, alignItems: 'center' },
+  container: { 
+    flex: 1, 
+    padding: 16,
+    backgroundColor: '#FFFFFF'
+  },
+  header: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    marginBottom: 16,
+  },
+  backButton: { 
+    flexDirection: 'row', 
+    alignItems: 'center' 
+  },
+  backButtonText: { 
+    marginLeft: 8, 
+    color: '#7F8C8D' 
+  },
+  editSaveButton: { 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    
+  },
+  buttonText: { 
+    color: '#7F8C8D', 
+    fontSize: 16 
+  },
+  headerText: { 
+    fontSize: 24, 
+    fontWeight: 'bold', 
+    marginBottom: 16,
+    color: '#B8860B'
+  },
+  input: { 
+    width: '100%', 
+    padding: 10, 
+    borderWidth: 1, 
+    borderColor: '#ccc', 
+    borderRadius: 8, 
+    backgroundColor: '#fff', 
+    marginBottom: 15,
+  },
+  editable: { 
+    borderColor: '#7F8C8D' 
+  },
+  inputContainer: { 
+    flexDirection: 'row', // Arrange items in a row
+    alignItems: 'center', // Vertically align label and picker
+    justifyContent: 'space-between', // Push label and picker to opposite ends
+    marginVertical: 5,
+    
+  },
+  pickerContainer:{
+    backgroundColor: '#FFFFFF',
+    height: 30,
+    borderRadius:10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 10,
+    borderWidth: .5,
+    borderColor: '#7F8C8D'
+    
+  },
+  label: { 
+    fontSize: 16,
+    color: '#7F8C8D' 
+  },
+  picker: { 
+    width: 140, 
+    color: '#7F8C8D', // Example text color for the picker
+  },
+  difficultyText: { 
+    fontSize: 16,
+    color: '#7F8C8D',
+    paddingHorizontal: 5
+  },
+  dateTimeContainer: { 
+    flexDirection: 'row', // Arrange items in a row
+    alignItems: 'center', // Vertically align label and picker
+    justifyContent: 'space-between', // Push label and picker to opposite ends
+    marginVertical: 5,
+  },
+  dateValue:{
+    fontSize: 16,
+    color: '#7F8C8D',
+    paddingHorizontal: 5,
+    backgroundColor: '#FFFFFF',
+    height: 30,
+    borderRadius:10,
+    paddingTop: 4,
+    borderWidth: .5,
+    borderColor: '#7F8C8D'
+  },
+  timeValue:{
+    fontSize: 16,
+    color: '#7F8C8D',
+    paddingHorizontal: 5,
+    backgroundColor: '#FFFFFF',
+    height: 30,
+    borderRadius:10,
+    paddingTop: 4,
+    borderWidth: .5,
+    borderColor: '#7F8C8D'
+  },
+  calendarButton: { 
+    padding: 8 
+  },
+  clockButton: { 
+    padding: 8 
+  },
+  dateText: { 
+    fontSize: 16,
+    color: '#7F8C8D'
+  },
+  subtaskContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between', // Places items at opposite ends
+    marginBottom: 10
+  },
+  subtaskLeft: {
+    flexDirection: 'row', // Ensures checkbox and title are in a row
+    alignItems: 'center',
+    flex: 1, // Allows the left section to take up remaining space
+    fontSize: 16,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    borderRadius:10,
+    minHeight:40,
+    paddingHorizontal: 8,
+    paddingVertical: 10, 
+    borderWidth: .5,
+    borderColor: '#7F8C8D'
+    
+  },
+  subtaskText: {
+    marginLeft: 10, // Space between checkbox and title
+    fontSize: 16,
+    color: '#7F8C8D', // Default text color
+  },
+  completed: {
+    textDecorationLine: 'line-through', // Strikes through completed tasks
+    color: '#999', // Optional: lighter color for completed tasks
+  },
+  button: {
+     backgroundColor: '#2C3E50', 
+     padding: 10, 
+     marginBottom: 16, 
+     alignItems: 'center',
+     borderRadius: 15
+    },
   deleteSubtask:{
-    display: 'flex',
-    justifyContent: 'flex-end'
+    justifyContent: 'flex-end',
+    height: 40,
+    padding: 10,
+    borderRadius:10,
+    color: '#FFFFFF',
+    alignItems: 'center',
+    marginLeft: 10,
+    borderWidth: .5,
+    borderColor: '#7F8C8D'
   }
 });

@@ -1,37 +1,71 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, ScrollView } from "react-native";
 import { useSQLiteContext } from "expo-sqlite"; // Assuming you're using a custom SQLite context
 import { useFocusEffect } from '@react-navigation/native';
+import IntroductionModal from './component/IntroductionModal';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 const achievementsData = [
   {
     id: 1,
-    title: "Task Novice",
-    description: "Complete 10 tasks.",
-    required: 8,
+    title: "Conquer the Day",
+    description: "Complete 1 task.",
+    required: 1,
     icon: "dedicated.png",
   },
   {
     id: 2,
     title: "Task Expert",
     description: "Complete 50 tasks.",
-    required: 3,
-    icon: "dedicated.png",
+    required: 50,
+    icon: "dedicated2.png",
   },
   {
     id: 3,
     title: "Task Master",
     description: "Complete 100 tasks.",
-    required: 4,
-    icon: "gladiator.png",
+    required: 100,
+    icon: "taskmaniac.png",
   },
+];
+
+const achievementsLevel = [
+  {
+    id: 1,
+    title: "Rising Star",
+    description: "Reach Level 2.",
+    required: 2,
+    icon: "levelup.png",
+  },
+  {
+    id: 2,
+    title: "Seasoned Adventurer",
+    description: "Reach Level 5.",
+    required: 5,
+    icon: "levelup.png",
+  },
+
 ];
 
 const AchievementScreen = () => {
   const db = useSQLiteContext();
   const [completedAchievements, setCompletedAchievements] = useState([]);
+  const [level, setLevel] = useState()
   const [taskCount, setTaskCount] = useState(0);
   const [activeTab, setActiveTab] = useState("ongoing"); // State for active tab (ongoing or completed)
+  console.log(level);
 
+  const fetchLevel = async () => {
+    try {
+      const result = await db.getFirstAsync("SELECT level FROM users");
+      setLevel(result.level);
+  
+    } catch (error) {
+      console.error("Error fetching level", error);
+      return 0;
+    }
+  };
+  
   const fetchTaskCompletionCount = async () => {
     try {
       const result = await db.getFirstAsync("SELECT COUNT(*) AS count FROM tasks WHERE status = ?", [
@@ -73,48 +107,90 @@ const AchievementScreen = () => {
     }
   };
 
-  const checkForCompletedAchievements = async (updatedTaskCount) => {
+  const checkForCompletedAchievements = async (updatedValue, type = 'task') => {
     const newCompleted = [];
-    for (const achievement of achievementsData) {
+  
+    // Determine which data to check based on the type
+    const achievements = type === 'level' ? achievementsLevel : achievementsData;
+    
+    for (const achievement of achievements) {
+      const valueToCompare = type === 'level' ? updatedValue : updatedValue;  // You can use the updated value directly in both cases (level or task count)
+      
       if (
-        updatedTaskCount >= achievement.required &&
+        valueToCompare >= achievement.required &&
         !completedAchievements.some((a) => a.title === achievement.title)
       ) {
         await saveCompletedAchievement(achievement.title, achievement.icon);
         newCompleted.push({ title: achievement.title, icon: achievement.icon });
       }
     }
-
+  
     // Update state for new achievements
     if (newCompleted.length > 0) {
       setCompletedAchievements((prev) => [...prev, ...newCompleted]);
     }
   };
+  
 
   const achievementIcons = {
     "dedicated.png": require("../assets/achievements/dedicated.png"),
+    "dedicated2.png": require("../assets/achievements/dedicated2.png"),
+    "taskmaniac.png": require("../assets/achievements/taskmaniac.png"),
     "gladiator.png": require("../assets/avatars/gladiator.png"),
+    "levelup.png": require("../assets/achievements/levelup.png")
   };
 
   useFocusEffect(
     React.useCallback(() => {
       const loadData = async () => {
+        fetchLevel();
         const count = await fetchTaskCompletionCount();
         setTaskCount(count);
 
         const achievements = await fetchCompletedAchievements();
         setCompletedAchievements(achievements);
-
+        
         // Check for any new achievements based on the latest task count
         await checkForCompletedAchievements(count);
+        await checkForCompletedAchievements(level);
       };
 
       loadData();
     }, [])
   );
 
+  
+  const [showModal, setShowModal] = useState(false);
+
+  const checkFirstTime = async () => {
+    const hasSeenIntro = await AsyncStorage.getItem('AchievementIntro');
+    if (!hasSeenIntro) {
+      setShowModal(true);
+    }
+  };
+
+  useEffect(() => {
+    checkFirstTime();
+  }, []);
+
+  const handleCloseModal = async () => {
+    await AsyncStorage.setItem('AchievementIntro', 'true');
+    setShowModal(false);
+  };
   return (
     <View style={styles.container}>
+      
+      <IntroductionModal
+        visible={showModal}
+        onClose={handleCloseModal}
+        dialogues={[
+          'Here, you’ll find the marks of your triumphs—your earned achievements that reflect your bravery, strategy, and determination!',
+          'Unlock new feats, witness your growth, and continue your quest by pushing forward to even greater challenges.',
+          'Are you ready to view your legendary achievements and discover what awaits on the path ahead?',
+        ]}
+        avatar={require('../assets/avatars/wizard.png')}
+        name="Elder Mage"
+      />
       <Text style={styles.header}>Challenges</Text>
 
       {/* Navigation Buttons */}
@@ -135,34 +211,67 @@ const AchievementScreen = () => {
 
       {/* Conditional Rendering Based on Active Tab */}
       {activeTab === "ongoing" ? (
-        <FlatList
-          data={achievementsData.filter((item) => taskCount < item.required)}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={({ item }) => {
-            const progress = Math.min(taskCount / item.required, 1);
+        <ScrollView>
+          <FlatList
+            data={achievementsData.filter((item) => taskCount < item.required)}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={({ item }) => {
+              const progress = Math.min(taskCount / item.required, 1);
 
-            return (
-              <View style={styles.achievementContainer}>
-                <Image
-                  source={achievementIcons[item.icon]}
-                  style={styles.icon}
-                />
-                <View style={styles.details}>
-                  <Text style={styles.title}>{item.title}</Text>
-                  <Text style={styles.description}>{item.description}</Text>
-                  <View style={styles.progressBarContainer}>
-                    <View
-                      style={[styles.progressBar, { width: `${progress * 100}%` }]}
-                    />
+              return (
+                <View style={styles.achievementContainer}>
+                  <Image
+                    source={achievementIcons[item.icon]}
+                    style={styles.icon}
+                  />
+                  <View style={styles.details}>
+                    <Text style={styles.title}>{item.title}</Text>
+                    <Text style={styles.description}>{item.description}</Text>
+                    <View style={styles.progressBarContainer}>
+                      <View
+                        style={[styles.progressBar, { width: `${progress * 100}%` }]}
+                      />
+                    </View>
+                    <Text style={styles.progressText}>
+                      {Math.min(taskCount, item.required)} / {item.required}
+                    </Text>
                   </View>
-                  <Text style={styles.progressText}>
-                    {Math.min(taskCount, item.required)} / {item.required}
-                  </Text>
                 </View>
-              </View>
-            );
-          }}
-        />
+              );
+            }}
+            scrollEnabled={false}
+          />
+
+          <FlatList
+            data={achievementsLevel.filter((item) => level < item.required)}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={({ item }) => {
+              const progress = Math.min(level / item.required, 1);
+
+              return (
+                <View style={styles.achievementContainer}>
+                  <Image
+                    source={achievementIcons[item.icon]}
+                    style={styles.icon}
+                  />
+                  <View style={styles.details}>
+                    <Text style={styles.title}>{item.title}</Text>
+                    <Text style={styles.description}>{item.description}</Text>
+                    <View style={styles.progressBarContainer}>
+                      <View
+                        style={[styles.progressBar, { width: `${progress * 100}%` }]}
+                      />
+                    </View>
+                    <Text style={styles.progressText}>
+                      {Math.min(level, item.required)} / {item.required}
+                    </Text>
+                  </View>
+                </View>
+              );
+            }}
+            scrollEnabled={false}
+          />
+        </ScrollView>
       ) : (
         <FlatList
           data={completedAchievements}
@@ -176,6 +285,7 @@ const AchievementScreen = () => {
               <Text style={styles.title}>{item.title}</Text>
             </View>
           )}
+          scrollEnabled={false}
         />
       )}
     </View>
@@ -185,11 +295,12 @@ const AchievementScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
-    backgroundColor: "#fff",
+    padding: 16,
+    backgroundColor: "#FFFFFF",
   },
   header: {
     fontSize: 24,
+    color: '#B8860B',
     fontWeight: "bold",
     marginBottom: 20,
     textAlign: 'center',
@@ -203,25 +314,25 @@ const styles = StyleSheet.create({
   navButton: {
     paddingVertical: 10,
     paddingHorizontal: 20,
-    backgroundColor: "#e0e0e0",
+    backgroundColor: "#2C3E50",
     borderRadius: 5,
   },
   navButtonText: {
     fontSize: 16,
     fontWeight: "bold",
-    color: "#333",
+    color: "#FFFFFF",
   },
   activeTabButton: {
-    backgroundColor: "#4caf50",
+    backgroundColor: "#2C3E50",
   },
   achievementContainer: {
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 20,
-    backgroundColor: "#f8f8f8",
-    borderRadius: 10,
+    backgroundColor: "#2C3E50",
+    borderRadius: 15,
     padding: 10,
-    elevation: 3,
+    elevation: 5,
   },
   icon: {
     width: 50,
@@ -234,10 +345,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: "bold",
+    color: 'white'
   },
   description: {
     fontSize: 14,
-    color: "#666",
+    color: "#FFFFFF",
     marginBottom: 10,
   },
   progressBarContainer: {
@@ -254,7 +366,7 @@ const styles = StyleSheet.create({
   },
   progressText: {
     fontSize: 12,
-    color: "#333",
+    color: "white",
   },
 });
 

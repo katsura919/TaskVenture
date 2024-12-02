@@ -2,8 +2,31 @@ import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, Image, TouchableOpacity, Modal, FlatList, TextInput, Button} from "react-native";
 import { useSQLiteContext } from "expo-sqlite"; // Adjust based on your SQLite setup
 import { useFocusEffect } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
+
+import IntroductionModal from './component/IntroductionModal';
+import AsyncStorage from '@react-native-async-storage/async-storage'; 
 
 const Profile = () => {
+  //Intro Modal
+  const [showModal, setShowModal] = useState(false);
+
+  const checkFirstTime = async () => {
+    const hasSeenIntro = await AsyncStorage.getItem('ProfileIntro');
+    if (!hasSeenIntro) {
+      setShowModal(true);
+    }
+  };
+
+  useEffect(() => {
+    checkFirstTime();
+  }, []);
+
+  const handleCloseModal = async () => {
+    await AsyncStorage.setItem('ProfileIntro', 'true');
+    setShowModal(false);
+  };
+
   const db = useSQLiteContext();
   const [profile, setProfile] = useState(null);
   const [newName, setNewName] = useState(""); // New name state
@@ -54,7 +77,7 @@ const Profile = () => {
         const user = result[0];
         setProfile(user);
         setNewName(user.username); // Initialize the name to the current name
-        setProfilePicture(user.profile_picture || "../assets/profile-img.png"); // Default image
+        setProfilePicture(user.profile_picture || "../assets/avatars/gamer.png"); // Default image
         setSelectedTitle(user.title || "No title");
 
         // Fetch completed achievements for the user
@@ -70,7 +93,6 @@ const Profile = () => {
 
   const achievementIcons = {
     "dedicated.png": require("../assets/achievements/dedicated.png"),
-    "gladiator.png": require("../assets/avatars/gladiator.png"),
   };
 
   useEffect(() => {
@@ -117,9 +139,24 @@ const Profile = () => {
 
    // List of images with unlock levels
    const unlockableImages = [
-    { source: require("../assets/avatars/gladiator.png"), level: 1 },
-    { source: require("../assets/avatars/assasin.png"), level: 2 },
-    { source: require("../assets/avatars/astronaut.png"), level: 10 },
+    { source: require("../assets/avatars/ninja.gif"), level: 1 },
+    { source: require("../assets/avatars/ninja1.gif"), level: 1 },
+    { source: require("../assets/avatars/knightmove.gif"), level: 1 },
+    { source: require("../assets/avatars/knight2.gif"), level: 1 },
+    { source: require("../assets/avatars/gamer.png"), level: 1 },
+    { source: require("../assets/avatars/woman.png"), level: 1 },
+    { source: require("../assets/avatars/astronaut.png"), level: 1 },
+    { source: require("../assets/avatars/african1.png"), level: 1 },
+    { source: require("../assets/avatars/african2.png"), level: 1 },
+    { source: require("../assets/avatars/boy.png"), level: 1 },
+    { source: require("../assets/avatars/hacker.png"), level: 1 },
+    { source: require("../assets/avatars/knight.png"), level: 1 },
+    { source: require("../assets/avatars/meerkat.png"), level: 1 },
+    { source: require("../assets/avatars/spartan.png"), level: 1 },
+    { source: require("../assets/avatars/viking.png"), level: 1 },
+    { source: require("../assets/avatars/warrior.png"), level: 1 },
+    
+
   ];
 
   const updateProfilePicture = async (imagePath) => {
@@ -140,10 +177,12 @@ const Profile = () => {
   };
 
   const [availableTitles, setAvailableTitles] = useState([
-    { title: "Beginner", level: 1 },
-    { title: "Intermediate", level: 1},
-    { title: "Advanced", level: 10 },
-    { title: "Master", level: 20 },
+    { title: "Brave Explorer", level: 1 },
+    { title: "Mystic Wanderer", level: 1},
+    { title: "Fearless Challenger", level: 1 },
+    { title: "Pathfinder", level: 1 },
+    { title: "Arcane Seeker", level: 1 },
+    { title: "Task Maniac", level: 1},
   ]);
 
   const updateProfileTitle = async (newTitle) => {
@@ -179,13 +218,27 @@ const Profile = () => {
   
   return (
     <View style={styles.container}>
+      <IntroductionModal
+        visible={showModal}
+        onClose={handleCloseModal}
+        dialogues={[
+          'Welcome to your profile, Adventurer! This is where you can see the fruits of your hard work.',
+          'Here, you can choose your avatar, set your title, and track your progress on your epic journey.',
+          'Keep an eye on your level, achievements, and the path you’ve walked so far. Your adventure is just beginning!',
+        ]}
+        avatar={require('../assets/avatars/wizard.png')}
+        name="Adventurer"
+      />
+
       {/* Profile Picture */}
-      <TouchableOpacity onPress={() => setModalVisible(true)}>
+      <View style={styles.profileContainer}>
         <Image source={profilePicture} style={styles.profileImage} />
-        <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.editIconContainer}>
-          <Text style={styles.editIcon}>✏️</Text>
+        
+      </View>
+
+      <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.editIconContainer}>
+          <Image style={styles.pen} source={require('../assets/icons/pen.png')}/>
         </TouchableOpacity>
-      </TouchableOpacity>
 
       {/* Name */}
       <Text style={styles.name}>{profile.username}</Text>
@@ -245,14 +298,15 @@ const Profile = () => {
             transparent={true}
           >
             <View style={styles.modalContainer}>
-              <View>
-                <TouchableOpacity onPress={() => setModalVisible(false)} style={styles.closeModal}>
-                  <Text style={styles.editIcon}>Close</Text>
+              <View style={styles.backbuttonContainer}>
+                <TouchableOpacity style={styles.backButton} onPress={() => setModalVisible(false)}>
+                  <Ionicons name="arrow-back" size={24} color="#7F8C8D" />
+                  <Text style={styles.backButtonText}>Back</Text>
                 </TouchableOpacity>
               </View>
 
                {/* Name Edit Section */}
-          <Text style={styles.editIcon}>Edit Name</Text>
+          <Text style={styles.labels}>Edit Name</Text>
           <TextInput
             style={styles.nameInput}
             value={newName}
@@ -260,14 +314,16 @@ const Profile = () => {
             placeholder="Enter new name"
             placeholderTextColor="#ccc"
           />
-          <Button title="Save Name" onPress={handleNameChange} />
+          <TouchableOpacity style={styles.saveName} onPress={handleNameChange}>
+            <Text style={styles.saveText}>Save Name</Text>
+          </TouchableOpacity>
 
               {/* Avatars Section */}
-              <Text style={styles.editIcon}>Avatars</Text>
+              <Text style={styles.labels}>Avatars</Text>
               <FlatList
                 data={unlockableImages}
                 keyExtractor={(item, index) => index.toString()}
-                numColumns={3}
+                numColumns={4}
                 renderItem={({ item }) => (
                   <TouchableOpacity
                     onPress={() =>
@@ -290,11 +346,11 @@ const Profile = () => {
               />
 
               {/* Titles Section */}
-              <Text style={styles.editIcon}>Titles</Text>
+              <Text style={styles.labels}>Titles</Text>
               <FlatList
                 data={availableTitles}
                 keyExtractor={(item, index) => index.toString()}
-                numColumns={3}
+                numColumns={2}
                 renderItem={({ item }) => (
                   <TouchableOpacity
                     onPress={() => handleTitleSelection(item)}
@@ -322,39 +378,43 @@ const styles = StyleSheet.create({
   container: {
     alignItems: "center",
     flex: 1,
-    backgroundColor: "#1b181c",
+    backgroundColor: "#FFFFFF",
     padding: 16,
+    paddingTop: 30
+    
+  },
+  profileContainer:{
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+    overflow: 'hidden',  // Ensures the GIF is clipped to the border radius
+    backgroundColor: 'lightblue'
   },
   profileImage: {
     width: 150,
     height: 150,
     borderRadius: 75,
-    marginBottom: 20,
-    position: 'relative'
+
   },
   editIconContainer: {
-    position: "absolute",
-    bottom: 10,
-    right: 10,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    bottom: 30,
+    right: -35,
     borderRadius: 15,
     padding: 5,
   },
-  editIcon: {
-    color: "#fff",
-    fontSize: 16,
+  pen: {
+    width: 30,
+    height: 30
   },
   name: {
     fontSize: 24,
     fontWeight: "bold",
-    marginBottom: 10,
-    color: "#fff",
+    color: "gray",
   },
   title: {
     fontSize: 18,
     fontStyle: "italic",
-    marginBottom: 20,
-    color: "#bbb",
+    color: "#7F8C8D",
   },
   levelContainer: {
     alignItems: "center",
@@ -365,15 +425,17 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "600",
     marginBottom: 10,
-    color: "#fff",
+    color: "#7F8C8D",
   },
   progressBarBackground: {
     width: 300,
     height: 15,
-    backgroundColor: "#444",
+    backgroundColor: "#fff",
     borderRadius: 10,
     overflow: "hidden",
     marginBottom: 5,
+    borderWidth: .5,
+    borderColor: '#7F8C8D'
   },
   progressBarFill: {
     height: "100%",
@@ -389,25 +451,58 @@ const styles = StyleSheet.create({
   },
 
   modalContainer: {
-    padding: 20,
+    padding: 10,
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "lightblue",
+    backgroundColor: "#FFFFFF",
+  },
+  backbuttonContainer: {
+    flexDirection: 'row',         // Align items in a row
+    width: '100%',
+    justifyContent: 'flex-start', // Align items to the left
+    alignItems: 'center',         // Vertically center items
+    padding: 5,                  // Add padding for spacing
+  
+  },
+  backButton: {
+    flexDirection: 'row',         // Keep icon and text in a row
+    alignItems: 'center',         // Center icon and text vertically
+  },
+  backButtonText: {
+    color: '#7F8C8D',
+    marginLeft: 8,                // Add space between the icon and text
+    fontSize: 16,
+  },
+  labels:{
+    color: '#7F8C8D',
+    fontSize: 15, 
+    marginBottom: 10
   },
   nameInput: {
-    width: 250,
+    width: 300,
     height: 40,
-    backgroundColor: "#333",
     borderRadius: 8,
-    color: "#fff",
+    color: "#7F8C8D",
     paddingHorizontal: 10,
     marginBottom: 10,
+    borderWidth: .5,
+    borderColor: '#7F8C8D'
+  },
+  saveName:{
+    backgroundColor: '#2C3E50',
+    borderRadius: 10,
+    padding: 5,
+    marginBottom: 20
+  },
+  saveText:{
+    color: '#FFFFFF'
   },
   modalImage: {
-    width: 70,
-    height: 70,
+    width: 60,
+    height: 60,
     borderRadius: 35, // Makes the image circular
+    overflow: 'hidden'
   },
   imageOption: {
     margin: 10,
@@ -427,14 +522,18 @@ const styles = StyleSheet.create({
     color: "#fff",
   },
   titleOption: {
-    padding: 10,
-    backgroundColor: "#333",
+    padding: 2,
+    backgroundColor: "#2C3E50",
     borderRadius: 5,
-    margin: 10,
+    width: 150,
+    height: 30,
+    margin: 2,
+    alignItems: 'center',
+    justifyContent:'center'
   },
   titleText: {
     color: "#fff",
-    fontSize: 18,
+    fontSize: 13,
   },
   lockedTitle: {
     color: "#888", // Use a different color to indicate locked titles
@@ -449,7 +548,7 @@ const styles = StyleSheet.create({
   achievementsHeader: {
     fontSize: 20,
     fontWeight: "bold",
-    color: "#fff",
+    color: "#7F8C8D",
     marginBottom: 10,
   },
   achievementItem: {
@@ -468,7 +567,7 @@ const styles = StyleSheet.create({
   },
   achievementTitle: {
     fontSize: 13,
-    color: "#fff",
+    color: "#7F8C8D",
    
   },
 });

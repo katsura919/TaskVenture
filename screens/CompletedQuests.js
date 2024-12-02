@@ -15,9 +15,9 @@ export default function MyTasks({ navigation }) {
       const result = await db.getAllAsync('SELECT * FROM tasks WHERE status = ?', ['completed']);
       
       // Separate tasks into categories based on difficulty
-      const easy = result.filter(task => task.difficulty === 'easy');
-      const medium = result.filter(task => task.difficulty === 'medium');
-      const hard = result.filter(task => task.difficulty === 'hard');
+      const easy = result.filter(task => task.difficulty === 'Easy');
+      const medium = result.filter(task => task.difficulty === 'Medium');
+      const hard = result.filter(task => task.difficulty === 'Hard');
 
       setEasyTasks(easy);
       setMediumTasks(medium);
@@ -67,7 +67,7 @@ export default function MyTasks({ navigation }) {
       
       <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color="#fff" />
-          <Text style={styles.backButtonText}>Back</Text>
+    
         </TouchableOpacity>
 
       {/* Easy Tasks */}
@@ -80,7 +80,7 @@ export default function MyTasks({ navigation }) {
             <TouchableOpacity
               onPress={() => navigation.navigate('TaskDetails', { taskId: item.task_id })}
             >
-              <View style={[styles.taskContainer, item.status === 'completed' && styles.taskCompleted]}>
+              <View style={[styles.taskContainerEasy, item.status === 'completed' && styles.taskCompleted]}>
                 <TouchableOpacity
                   onPress={() => markTaskAsCompleted(item.task_id)} // Mark task as completed when tapped
                 >
@@ -111,7 +111,7 @@ export default function MyTasks({ navigation }) {
             <TouchableOpacity
               onPress={() => navigation.navigate('TaskDetails', { taskId: item.task_id })}
             >
-              <View style={[styles.taskContainer, item.status === 'completed' && styles.taskCompleted]}>
+              <View style={[styles.taskContainerMedium, item.status === 'completed' && styles.taskCompleted]}>
                 <TouchableOpacity
                   onPress={() => markTaskAsCompleted(item.task_id)} // Mark task as completed when tapped
                 >
@@ -142,7 +142,7 @@ export default function MyTasks({ navigation }) {
             <TouchableOpacity
               onPress={() => navigation.navigate('TaskDetails', { taskId: item.task_id })}
             >
-              <View style={[styles.taskContainer, item.status === 'completed' && styles.taskCompleted]}>
+              <View style={[styles.taskContainerHard, item.status === 'completed' && styles.taskCompleted]}>
                 <TouchableOpacity
                   onPress={() => markTaskAsCompleted(item.task_id)} // Mark task as completed when tapped
                 >
@@ -168,15 +168,72 @@ export default function MyTasks({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8f9fa', padding: 16 },
-  header: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginBottom: 20 },
-  headerText: { fontSize: 24, fontWeight: 'bold' },
-  taskListContainer: { marginBottom: 20 },
-  categoryHeader: { fontSize: 20, fontWeight: 'bold', marginVertical: 10 },
-  taskContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#e1e7ed', padding: 15, borderRadius: 10, marginVertical: 5 },
-  taskIcon: { marginRight: 10 },
-  taskText: { fontSize: 16, fontWeight: 'bold', flex: 1 },
-  completedTaskText: { textDecorationLine: 'line-through', color: 'gray' },
-  taskCompleted: { backgroundColor: '#d3f8e2' },
-  dueDateText: { fontSize: 14, color: '#6c757d' },
+  container: { 
+    flex: 1, 
+    backgroundColor: '#121212', 
+    padding: 16 
+  },
+  header: { 
+    flexDirection: 'row', 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    marginBottom: 20,
+    
+  },
+  headerText: { 
+    fontSize: 24, 
+    fontWeight: 'bold',
+    color: '#FFFFFF'
+  },
+  taskListContainer: { 
+    marginBottom: 20 
+  },
+  categoryHeader: { fontSize: 20, 
+    fontWeight: 'bold', 
+    marginVertical: 10, 
+    color: '#FFFFFF'
+  },
+  taskContainerEasy: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    backgroundColor: '#6dc34b', 
+    padding: 15, 
+    borderRadius: 10,
+    marginVertical: 5 
+  },
+  taskContainerMedium: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    backgroundColor: '#e1e13d', 
+    padding: 15, 
+    borderRadius: 10,
+    marginVertical: 5 
+  },
+  taskContainerHard: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    backgroundColor: '#f6b531', 
+    padding: 15, 
+    borderRadius: 10,
+   
+    marginVertical: 5 },
+  taskIcon: { 
+    marginRight: 10 
+  },
+  taskText: { 
+    fontSize: 16, 
+    fontWeight: 'bold', 
+    flex: 1 
+  },
+  completedTaskText: { 
+    textDecorationLine: 'line-through', 
+    color: 'gray' 
+  },
+  taskCompleted: { 
+    backgroundColor: '#d3f8e2' 
+  },
+  dueDateText: { 
+    fontSize: 14, 
+    color: '#6c757d' 
+  },
 });

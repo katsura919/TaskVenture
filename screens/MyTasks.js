@@ -1,23 +1,46 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, FlatList, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, View, FlatList, TouchableOpacity, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons'; // Import Expo Ionicons
 import { useSQLiteContext } from 'expo-sqlite';
 import { useFocusEffect } from '@react-navigation/native';
 
+import IntroductionModal from './component/IntroductionModal';
+import AsyncStorage from '@react-native-async-storage/async-storage'; 
+
 export default function MyTasks({ navigation }) {
+
+  //Intro Modal
+  const [showModal, setShowModal] = useState(false);
+
+  const checkFirstTime = async () => {
+    const hasSeenIntro = await AsyncStorage.getItem('QuestListIntro');
+    if (!hasSeenIntro) {
+      setShowModal(true);
+    }
+  };
+
+  useEffect(() => {
+    checkFirstTime();
+  }, []);
+
+  const handleCloseModal = async () => {
+    await AsyncStorage.setItem('QuestListIntro', 'true');
+    setShowModal(false);
+  };
+
   const db = useSQLiteContext();
   const [easyTasks, setEasyTasks] = useState([]);
   const [mediumTasks, setMediumTasks] = useState([]);
   const [hardTasks, setHardTasks] = useState([]);
-
+  
   const fetchTasks = async () => {
     try {
       const result = await db.getAllAsync('SELECT * FROM tasks WHERE status = ?', ['pending']);
       
       // Separate tasks into categories based on difficulty
-      const easy = result.filter(task => task.difficulty === 'easy');
-      const medium = result.filter(task => task.difficulty === 'medium');
-      const hard = result.filter(task => task.difficulty === 'hard');
+      const easy = result.filter(task => task.difficulty === 'Easy');
+      const medium = result.filter(task => task.difficulty === 'Medium');
+      const hard = result.filter(task => task.difficulty === 'Hard');
 
       setEasyTasks(easy);
       setMediumTasks(medium);
@@ -56,9 +79,9 @@ export default function MyTasks({ navigation }) {
       // Step 2: Determine XP based on difficulty
       const difficulty = task.difficulty;
       let xp = 0;
-      if (difficulty === 'easy') xp = 10;
-      else if (difficulty === 'medium') xp = 20;
-      else if (difficulty === 'hard') xp = 30;
+      if (difficulty === 'Easy') xp = 10;
+      else if (difficulty === 'Medium') xp = 20;
+      else if (difficulty === 'Hard') xp = 30;
 
       // Step 3: Update the task status to 'completed'
       await db.getFirstAsync(
@@ -98,13 +121,28 @@ export default function MyTasks({ navigation }) {
 
   return (
     <View style={styles.container}>
+      <IntroductionModal
+        visible={showModal}
+        onClose={handleCloseModal}
+        dialogues={[
+          'Behold, your list of quests—tasks that will challenge your strength and wits.',
+          'Each quest is a stepping stone on your journey. Complete them to unlock greater rewards!',
+          'Ready to choose your next adventure? The path is yours to decide.',
+        ]}
+        avatar={require('../assets/avatars/wizard.png')}
+        name="Quest Keeper"
+      />
+
+
       <View style={styles.header}>
         <Text style={styles.headerText}>My Quests</Text>
       </View>
+      <ScrollView>
       <TouchableOpacity
+              style={styles.completedTask}
               onPress={() => navigation.navigate('CompletedTasks')}
             >
-      <Text style={styles}>Completed</Text>      
+      <Text style={styles.completedTaskLabel}>View Completed Quest</Text>      
       </TouchableOpacity>
       {/* Easy Tasks */}
       <View style={styles.taskListContainer}>
@@ -116,14 +154,14 @@ export default function MyTasks({ navigation }) {
             <TouchableOpacity
               onPress={() => navigation.navigate('TaskDetails', { taskId: item.task_id })}
             >
-              <View style={[styles.taskContainer, item.status === 'completed' && styles.taskCompleted]}>
+              <View style={[styles.taskContainerEasy, item.status === 'completed' && styles.taskCompleted]}>
                 <TouchableOpacity
                   onPress={() => markTaskAsCompleted(item.task_id)} // Mark task as completed when tapped
                 >
                   <Ionicons
                     name={item.status === 'completed' ? 'checkbox' : 'checkbox-outline'} // Change icon based on completion status
                     size={24}
-                    color={item.status === 'completed' ? '#28a745' : '#6c757d'}
+                    color={item.status === 'completed' ? '#28a745' : '#FFFFFF'}
                     style={styles.taskIcon}
                   />
                 </TouchableOpacity>
@@ -134,6 +172,7 @@ export default function MyTasks({ navigation }) {
               </View>
             </TouchableOpacity>
           )}
+          scrollEnabled={false}
         />
       </View>
 
@@ -147,14 +186,14 @@ export default function MyTasks({ navigation }) {
             <TouchableOpacity
               onPress={() => navigation.navigate('TaskDetails', { taskId: item.task_id })}
             >
-              <View style={[styles.taskContainer, item.status === 'completed' && styles.taskCompleted]}>
+              <View style={[styles.taskContainerMedium, item.status === 'completed' && styles.taskCompleted]}>
                 <TouchableOpacity
                   onPress={() => markTaskAsCompleted(item.task_id)} // Mark task as completed when tapped
                 >
                   <Ionicons
                     name={item.status === 'completed' ? 'checkbox' : 'checkbox-outline'} // Change icon based on completion status
                     size={24}
-                    color={item.status === 'completed' ? '#28a745' : '#6c757d'}
+                    color={item.status === 'completed' ? '#28a745' : '#FFFFFF'}
                     style={styles.taskIcon}
                   />
                 </TouchableOpacity>
@@ -165,6 +204,7 @@ export default function MyTasks({ navigation }) {
               </View>
             </TouchableOpacity>
           )}
+          scrollEnabled={false}
         />
       </View>
 
@@ -178,14 +218,14 @@ export default function MyTasks({ navigation }) {
             <TouchableOpacity
               onPress={() => navigation.navigate('TaskDetails', { taskId: item.task_id })}
             >
-              <View style={[styles.taskContainer, item.status === 'completed' && styles.taskCompleted]}>
+              <View style={[styles.taskContainerHard, item.status === 'completed' && styles.taskCompleted]}>
                 <TouchableOpacity
                   onPress={() => markTaskAsCompleted(item.task_id)} // Mark task as completed when tapped
                 >
                   <Ionicons
                     name={item.status === 'completed' ? 'checkbox' : 'checkbox-outline'} // Change icon based on completion status
                     size={24}
-                    color={item.status === 'completed' ? '#28a745' : '#6c757d'}
+                    color={item.status === 'completed' ? '#28a745' : '#FFFFFF'}
                     style={styles.taskIcon}
                   />
                 </TouchableOpacity>
@@ -196,23 +236,94 @@ export default function MyTasks({ navigation }) {
               </View>
             </TouchableOpacity>
           )}
+          scrollEnabled={false}
         />
       </View>
+      </ScrollView>
 
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8f9fa', padding: 16 },
-  header: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginBottom: 20 },
-  headerText: { fontSize: 24, fontWeight: 'bold' },
-  taskListContainer: { marginBottom: 20 },
-  categoryHeader: { fontSize: 20, fontWeight: 'bold', marginVertical: 10 },
-  taskContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#e1e7ed', padding: 15, borderRadius: 10, marginVertical: 5 },
-  taskIcon: { marginRight: 10 },
-  taskText: { fontSize: 16, fontWeight: 'bold', flex: 1 },
-  completedTaskText: { textDecorationLine: 'line-through', color: 'gray' },
-  taskCompleted: { backgroundColor: '#d3f8e2' },
-  dueDateText: { fontSize: 14, color: '#6c757d' },
+  container: { 
+    flex: 1, 
+    backgroundColor: '#FFFFFF', 
+    padding: 16 
+  },
+  completedTask:{
+    flexDirection: 'row', // Ensures the text can be aligned in a row
+    justifyContent: 'flex-end', // Aligns text to the right
+    
+  },
+  completedTaskLabel:{
+    fontSize: 13,
+    fontWeight: "bold",
+    color: "#7F8C8D",
+    justifyContent: 'flex-end'
+  },
+  header: { 
+    flexDirection: 'row', 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    marginBottom: 20 
+  },
+  headerText: { 
+    fontSize: 24, 
+    fontWeight: 'bold',
+    color: '#B8860B'
+  },
+  taskListContainer: { 
+    marginBottom: 20,
+  },
+  categoryHeader: { 
+    fontSize: 20, 
+    fontWeight: 'bold', 
+    marginVertical: 10,
+    color: '#7F8C8D'
+  },
+  taskContainerEasy: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    backgroundColor: '#6dc34b', 
+    padding: 15, 
+    borderRadius: 10,
+    marginVertical: 5,
+    elevation: 5
+  },
+  taskContainerMedium: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    backgroundColor: '#e1e13d', 
+    padding: 15, 
+    borderRadius: 10,
+    marginVertical: 5, 
+    elevation: 5
+  },
+  taskContainerHard: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    backgroundColor: '#f6b531', 
+    padding: 15, 
+    borderRadius: 10,   
+    marginVertical: 5,
+    elevation: 5
+  },
+  taskIcon: { 
+    marginRight: 10,
+  },
+  taskText: { 
+    fontSize: 16, 
+    flex: 1,
+    color: 'white'
+  },
+  completedTaskText: { 
+    textDecorationLine: 'line-through', 
+    color: 'gray' },
+  taskCompleted: { 
+    backgroundColor: '#d3f8e2' 
+  },
+  dueDateText: { 
+    fontSize: 14, 
+    color: 'white' },
 });

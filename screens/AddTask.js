@@ -1,13 +1,36 @@
-import React, { useState } from 'react';
-import { StyleSheet, Text, View, TextInput, Pressable, Alert } from 'react-native'; 
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, Text, View, TextInput, Pressable, Alert, TouchableOpacity, ScrollView} from 'react-native'; 
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useFocusEffect } from '@react-navigation/native';
 import { Picker } from '@react-native-picker/picker';  // Import Picker component
+import Feather from '@expo/vector-icons/Feather';
+import { Ionicons } from '@expo/vector-icons';
+import IntroductionModal from './component/IntroductionModal';
+import AsyncStorage from '@react-native-async-storage/async-storage'; 
 
 export default function AddTask() {
+
+  // Intro Modal
+  const [showModal, setShowModal] = useState(false);
+
+  const checkFirstTime = async () => {
+    const hasSeenIntro = await AsyncStorage.getItem('AddTaskIntro');
+    if (!hasSeenIntro) {
+      setShowModal(true);
+    }
+  };
+
+  useEffect(() => {
+    checkFirstTime();
+  }, []);
+
+  const handleCloseModal = async () => {
+    await AsyncStorage.setItem('AddTaskIntro', 'true');
+    setShowModal(false);
+  };
+
   const db = useSQLiteContext();
-  
   const [task, setTask] = useState('');
   const [description, setDescription] = useState('');
   const [dueDate, setDueDate] = useState(null);
@@ -16,7 +39,7 @@ export default function AddTask() {
   const [subtasks, setSubtasks] = useState([]);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
-  const [difficulty, setDifficulty] = useState('easy');  // Add state for difficulty
+  const [difficulty, setDifficulty] = useState('Easy');  // Add state for difficulty
   
   // Reset fields when the screen is focused
   useFocusEffect(
@@ -27,7 +50,7 @@ export default function AddTask() {
       setDueTime(null);
       setSubtask('');
       setSubtasks([]);
-      setDifficulty('easy');
+      setDifficulty('Easy');
     }, [])
   );
 
@@ -63,7 +86,7 @@ export default function AddTask() {
       setDueTime(null);
       setSubtask('');
       setSubtasks([]);
-      setDifficulty('easy');
+      setDifficulty('Easy');
     } catch (error) {
       console.log('Error inserting task:', error);
     }
@@ -80,22 +103,38 @@ export default function AddTask() {
     }
   };
 
+  const removeSubtask = (index) => {
+    // Remove the subtask from the list based on its index
+    const updatedSubtasks = subtasks.filter((sub, subIndex) => subIndex !== index);
+    setSubtasks(updatedSubtasks);
+  };
+
   const onDateChange = (event, selectedDate) => {
     if (event.type === 'set' && selectedDate) {
       setDueDate(selectedDate);
     }
     setShowDatePicker(false);
+    
   };
 
   const onTimeChange = (event, selectedTime) => {
     if (event.type === 'set' && selectedTime) {
+      // Set the selected time to the state
       setDueTime(selectedTime);
-      const newDateTime = new Date(dueDate);
-      newDateTime.setHours(selectedTime.getHours(), selectedTime.getMinutes());
-      setDueDate(newDateTime);
+  
+      // Merge the selected time into the existing dueDate
+      if (dueDate) {
+        const updatedDateTime = new Date(dueDate);
+        updatedDateTime.setHours(selectedTime.getHours(), selectedTime.getMinutes());
+        setDueDate(updatedDateTime);
+        setShowTimePicker(false);
+      }
     }
+    // Always hide the time picker when a selection is made or canceled
     setShowTimePicker(false);
   };
+  
+  
 
   const clearDueDate = () => {
     setDueDate(null);
@@ -104,11 +143,23 @@ export default function AddTask() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>New Quest</Text>
 
+      <IntroductionModal
+        visible={showModal}
+        onClose={handleCloseModal}
+        dialogues={[
+          'Here, you can add tasks—your challenges for the day. Each one brings you closer to your next victory!',
+          'Ready to take on your first task? The adventure awaits!',
+        ]}
+        avatar={require('../assets/avatars/wizard.png')}
+        name="Elder Mage"
+      />
+
+      <Text style={styles.title}>New Quest</Text>
+    <ScrollView style={styles.scroll}>
       <TextInput
         style={styles.input}
-        placeholder="Enter a Quest"
+        placeholder="Quest Title"
         value={task}
         onChangeText={(text) => setTask(text)}
         placeholderTextColor="#aaa"
@@ -116,7 +167,7 @@ export default function AddTask() {
       
       <TextInput
         style={styles.input}
-        placeholder="Enter a Description"
+        placeholder="Notes"
         value={description}
         onChangeText={(text) => setDescription(text)}
         placeholderTextColor="#aaa"
@@ -124,83 +175,104 @@ export default function AddTask() {
 
       {/* Difficulty Picker */}
       <View style={styles.difficultyContainer}>
-      <Text style={styles.label}>Difficulty: </Text>
-      <View style={styles.pickerContainer}>
-      <Picker
-        selectedValue={difficulty}
-        onValueChange={(itemValue) => setDifficulty(itemValue)}
-        style={styles.picker}
-      >
-        <Picker.Item label="Easy" value="easy" />
-        <Picker.Item label="Medium" value="medium" />
-        <Picker.Item label="Hard" value="hard" />
-      </Picker>
+        <Ionicons name="star" size={20} color="#7F8C8D" style={{marginRight: 5}} />
+          <Text style={styles.label}>Difficulty </Text>
+          <View style={styles.pickerContainer}>
+          <Picker
+            selectedValue={difficulty}
+            onValueChange={(itemValue) => setDifficulty(itemValue)}
+            style={styles.picker}
+          >
+            <Picker.Item label="Easy" value="Easy" />
+            <Picker.Item label="Medium" value="Medium" />
+            <Picker.Item label="Hard" value="Hard" />
+          </Picker>
+          </View>
       </View>
-      </View>
       
-      
-      <Text style={styles.label}>Deadline: </Text>
-      <Pressable onPress={() => setShowDatePicker(true)} style={styles.dateButton}>
-        <Text style={styles.dateText}>
-          {dueDate ? dueDate.toLocaleDateString() : 'Date Not Set'}
-        </Text>
-      </Pressable>
-      
-      {showDatePicker && (
-        <DateTimePicker
-          value={dueDate || new Date()}
-          mode="date"
-          display="default"
-          onChange={onDateChange}
-        />
-      )}
-
-      {dueDate && (
-        <>
-          <Text style={styles.label}>Select Due Time</Text>
-          <Pressable onPress={() => setShowTimePicker(true)} style={styles.dateButton}>
+      <View style={styles.dateContainer}>
+      <Ionicons name="calendar" size={20} color="#7F8C8D" style={{marginRight: 5}}/>
+          <Text style={styles.label}>
+            Due Date 
+          </Text>
+          <Pressable onPress={() => setShowDatePicker(true)} style={styles.dateButton}>
             <Text style={styles.dateText}>
-              {dueTime ? dueTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Time Not Set'}
+              {dueDate ? dueDate.toLocaleDateString() : 'Not Set'}
             </Text>
           </Pressable>
-        </>
-      )}
+          
+          {showDatePicker && (
+            <DateTimePicker
+              value={dueDate || new Date()}
+              mode="date"
+              display="default"
+              onChange={onDateChange}
+            />
+          )}
+      </View>
 
-      {showTimePicker && (
-        <DateTimePicker
-          value={dueTime || new Date()}
-          mode="time"
-          display="default"
-          onChange={onTimeChange}
-        />
-      )}
+      <View style={styles.timeContainer}>
+        <Ionicons name="time" size={20} color="#7F8C8D" style={{marginRight: 3}}/>
+              <Text style={styles.label}>Time  </Text>
+              <View style={styles.dateWrapper}>
+                <Pressable onPress={() => setShowTimePicker(true)} style={styles.dateButton}>
+                  <Text style={styles.dateText}>
+                    {dueTime ? dueTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Not Set'}
+                  </Text>
+                </Pressable>
+              </View>
+
+            {showTimePicker && (
+              <DateTimePicker
+                value={dueTime || new Date()}
+                mode="time"
+                display="default"
+                onChange={onTimeChange}
+              />
+            )}
+      </View>
+
 
       {dueDate && (
         <Pressable onPress={clearDueDate} style={styles.clearDateButton}>
-          <Text style={styles.buttonText}>Clear Due Date and Time</Text>
+          <Text style={styles.buttonText}>Clear Date and Time</Text>
         </Pressable>
       )}
 
-      <TextInput
-        style={styles.input}
-        placeholder="Enter a Subtask (Optional)"
-        value={subtask}
-        onChangeText={(text) => setSubtask(text)}
-        placeholderTextColor="#aaa"
-      />
-      <Pressable style={styles.addButton} onPress={handleAddSubtask}>
-        <Text style={styles.buttonText}>Add Subtask</Text>
-      </Pressable>
+
+      <View style={styles.subtaskInputContainer}>
+        <TextInput
+          style={styles.subTaskInput}
+          placeholder="Subtask"
+          value={subtask}
+          onChangeText={(text) => setSubtask(text)}
+          placeholderTextColor="#aaa"
+        />
+
+        <Pressable style={styles.addSubButton} onPress={handleAddSubtask}>
+          <Text style={styles.buttonText}>+</Text>
+        </Pressable>
+      </View>
+      
 
       <View style={styles.subtasksContainer}>
-        {subtasks.map((sub, index) => (
-          <Text key={index} style={styles.subtask}>{sub}</Text>
-        ))}
-      </View>
+      {subtasks.map((sub, index) => (
+        <View key={index} style={styles.subtaskItem}>
+          <Text style={styles.subtask}>{sub}</Text>
+          <TouchableOpacity
+            style={styles.removeButton}
+            onPress={() => removeSubtask(index)}
+          >
+             <Ionicons name="trash-outline" size={20} color="red" />
+          </TouchableOpacity>
+        </View>
+      ))}
+    </View>
 
       <Pressable style={styles.addButton} onPress={handleAddTask}>
-        <Text style={styles.buttonText}>Add Quest</Text>
+      <Feather name="check" size={30} color="white" />
       </Pressable>
+      </ScrollView>
     </View>
   );
 }
@@ -208,16 +280,21 @@ export default function AddTask() {
 const styles = StyleSheet.create({
   container: { 
     flex: 1,
-    backgroundColor: '#f0f4f7',
+    backgroundColor: '#FFFFFF', 
     padding: 20,
     alignItems: 'center',
   },
+  scroll:{
+    width: '100%',
+  },
   title: { 
-    fontSize: 28, 
-    fontWeight: 'bold', 
-    color: '#4a90e2', 
-    marginBottom: 20,
-    textAlign: 'center',
+    fontSize: 24, 
+    fontWeight: 'bold',
+    color: '#B8860B',
+    flexDirection: 'row', 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    marginBottom: 20 
   },
   input: { 
     width: '100%', 
@@ -230,42 +307,67 @@ const styles = StyleSheet.create({
   },
 
   difficultyContainer: {
-    flexDirection: 'row',
-    width: '100%',
-    alignItems: 'center'
+    flexDirection: 'row', // Arrange items in a row
+    alignItems: 'center', // Vertically align label and picker
+    justifyContent: 'space-between', // Push label and picker to opposite ends
+    marginVertical: 5,
   },
   label: {
+    flex: 1,
     fontSize: 16,
-    color: '#4a90e2',
+    color: '#7F8C8D',
     fontWeight: '500',
   },
   pickerContainer:{
-    display: 'flex',
-    width: 130,
-    height: 40,
+    backgroundColor: '#FFFFFF',
+    height: 30,
+    borderRadius:10,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'lightblue',
-    borderWidth: 1,
-    borderColor: 'gray',
-    borderRadius:10,
+    borderWidth: .5,
+    borderColor: '#7F8C8D'
   },
   picker: {
-    width: '100%', 
+    width: 140, 
+    color: '#7F8C8D', // Example text color for the picker
+    
+  },
+  dateContainer:{
+    flexDirection: 'row', // Arrange items in a row
+    alignItems: 'center', // Vertically align label and picker
+    justifyContent: 'space-between', // Push label and picker to opposite ends
+    marginVertical: 5,
+  },
+  dateWrapper:{
+    display: 'flex',
+    justifyContent: 'flex-end',
   },
   dateButton: {
-    padding: 12,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    marginBottom: 15,
-    backgroundColor: 'lightblue'
+    display: 'flex',
+    paddingHorizontal:10,
+    height: 30,
+    color: "#7F8C8D",
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius:10,
+    overflow: 'hidden',
+    borderWidth: .5,
+    borderColor: '#7F8C8D'
   },
   dateText: {
-    fontSize: 18,
-    color: 'white',
+    color: '#7F8C8D',
   },
+  timeContainer:{
+    flexDirection: 'row', // Arrange items in a row
+    alignItems: 'center', // Vertically align label and picker
+    justifyContent: 'space-between', // Push label and picker to opposite ends
+    marginVertical: 5,
+    marginBottom: 10,
+  },
+ 
   clearDateButton: {
+    
     padding: 12,
     backgroundColor: '#e74c3c',
     borderRadius: 12,
@@ -275,24 +377,91 @@ const styles = StyleSheet.create({
   addButton: {
     width: '100%', 
     height: 50, 
-    backgroundColor: '#4a90e2', 
-    padding: 15, 
-    borderRadius: 12, 
-    alignItems: 'center', 
+    backgroundColor: '#2C3E50', 
+    padding: 5, 
+    borderRadius: 10, 
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 15,
+    marginTop: 20,
+    alignItems: 'center'
   },
   buttonText: { 
     fontSize: 18, 
     color: '#fff',
     fontWeight: 'bold',
   },
-  subtasksContainer: { 
-    width: '100%', 
-    marginBottom: 20,
+
+  subtaskInputContainer:{
+    width: '100%',
+    backgroundColor: 'black',
+    height: 400
   },
-  subtask: { 
-    fontSize: 16, 
-    color: '#333', 
-    marginBottom: 5, 
+
+  subtaskItem: {
+    color: '#7F8C8D',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    
   },
+  subtask: {
+    flex: 1,
+    fontSize: 16,
+    marginRight: 10,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    borderRadius:10,
+    minHeight:40,
+    color: '#7F8C8D',
+    paddingHorizontal: 8,
+    paddingVertical: 10,
+    marginBottom: 10,
+    borderWidth: .5,
+    borderColor: '#7F8C8D'
+    
+  },
+  removeButton: {
+    justifyContent: 'flex-end',
+    height: 40,
+    padding: 10,
+    borderRadius:10,
+    color: '#FFFFFF',
+    alignItems: 'center',
+    borderWidth: .5,
+    marginBottom: 10,
+    borderColor: '#7F8C8D'
+  },
+  removeText: {
+    color: 'white',
+    fontSize: 14,
+    alignItems: 'center',
+    paddingBottom: 5
+  },
+
+  subtaskInputContainer: {
+    flexDirection: 'row', // Align items horizontally
+    alignItems: 'center', // Center items vertically
+    justifyContent: 'space-between', // Ensure even spacing between elements
+    marginBottom: 10
+  },
+  subTaskInput: {
+    width: 270, // Set width to 50% of the container
+    height: 40,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius:10,
+    paddingHorizontal: 10,
+    backgroundColor: '#fff',
+    marginRight: 5, // Add a small gap between input and button
+  },
+  addSubButton: {
+    width: 42, // Set width to 50% of the container
+    height: 40, // Match the input height for alignment
+    backgroundColor: '#2C3E50',
+    borderRadius:10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
 });

@@ -1,16 +1,38 @@
 import React, {  useState, useEffect } from 'react';
-import { StatusBar, View, Text, StyleSheet } from 'react-native';
+import { StatusBar, View, Text, StyleSheet, TouchableOpacity, Dimensions, Image, ScrollView } from 'react-native';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useFocusEffect } from '@react-navigation/native';
+import IntroductionModal from './component/IntroductionModal';
+import AsyncStorage from '@react-native-async-storage/async-storage'; 
 
 const Dashboard = () => {
   const db = useSQLiteContext();
+  const screenWidth = Dimensions.get('window').width;
   const [tasksDueThisWeek, setTasksDueThisWeek] = useState([]);
   const [taskCounts, setTaskCounts] = useState({
     easy: 0,
     medium: 0,
     hard: 0,
   });
+
+  //Intro Modal
+  const [showModal, setShowModal] = useState(false);
+
+  const checkFirstTime = async () => {
+    const hasSeenIntro = await AsyncStorage.getItem('HomeScreenIntro');
+    if (!hasSeenIntro) {
+      setShowModal(true);
+    }
+  };
+
+  useEffect(() => {
+    checkFirstTime();
+  }, []);
+
+  const handleCloseModal = async () => {
+    await AsyncStorage.setItem('HomeScreenIntro', 'true');
+    setShowModal(false);
+  };
 
    // Get the start and end of the current week (Sunday to Saturday)
    const getCurrentWeekRange = () => {
@@ -103,21 +125,37 @@ const Dashboard = () => {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#2a2a2a" />
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerText}>Welcome to TaskVenture!</Text>
-      </View>
+      <IntroductionModal
+        visible={showModal}
+        onClose={handleCloseModal}
+        dialogues={[
+          'Welcome, Adventurer! My name is Arcanor, your guide on this epic journey!',
+          'TaskVenture is not just a to-do list app, it’s a quest for productivity!',
+          'Complete tasks to earn experience, unlock achievements, and level up!',
+          'Are you ready to begin your adventure?',
+        ]}
+        avatar={require('../assets/avatars/wizard.png')}
+        name="Elder Mage"
+      />
 
-      {/* Progress Section */}
-      <View style={styles.progressContainer}>
-        <Text style={styles.progressTitle}>Track your progress</Text>
-        <Text style={styles.progressSubtitle}>View your daily task achievements</Text>
-        <View style={styles.progressBarBackground}>
-          <View style={[styles.progressBarFill, { width: '76%' }]} />
+
+      <View style={styles.card}>
+        <View style={styles.contentContainer}>
+          {/* Text Section */}
+          <View style={styles.textContainer}>
+            <Text style={styles.welcomeText}>Welcome, Adventurer!</Text>
+            <Text style={styles.subText}>
+              Your quest awaits. Ready to conquer today's quest?
+            </Text>
+          </View>
+          {/* Torch GIF */}
+          <Image
+            source={require('../assets/icons/torch.gif')} // Replace with your GIF path
+            style={styles.torchImage}
+          />
         </View>
-        <Text style={styles.progressPercentage}>76%</Text>
       </View>
-
+    <ScrollView style={styles.scroll}>
       <View style={styles.tasksection}>
         <Text style={styles.headerTask}>Weekly Quests</Text>
       
@@ -131,7 +169,7 @@ const Dashboard = () => {
         ) : (
           tasksDueThisWeek.map((task) => (
             <View key={task.task_id} style={styles.task}>
-              <Text style={styles.taskTitle}>{task.title}</Text>
+              <Text style={styles.taskTitles}>{task.title}</Text>
               <Text style={styles.taskDescription}>{task.description}</Text>
               <Text style={styles.taskDueDate}>Due: {formatDueDate(task.due_date)}</Text>
             </View>
@@ -151,6 +189,7 @@ const Dashboard = () => {
         <TaskCategory title="Hard" newTasks={taskCounts.hard} />
       </View>
     </View>
+    </ScrollView>
     </View>
   );
 };
@@ -170,59 +209,51 @@ const TaskCategory = ({ title, newTasks }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1b181c',
-    padding: 16,
+    backgroundColor: '#FFFFFF',
+    
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  scroll:{
+    width: '100%',
+  },
+  card: {
+    backgroundColor: '#FFFFFF', // White card background
+    borderRadius: 15,
+    padding: 10,
+    margin: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.1,
+    shadowRadius: 1,
+    elevation: 5,
+  },
+  contentContainer: {
+    flexDirection: 'row', // Align text and torch side by side
     alignItems: 'center',
-    marginBottom: 20,
+    
   },
-  headerText: {
-    color: 'white',
-    fontSize: 40,
+  textContainer: {
+    flex: 1, // Allow text to take up available space
+  },
+  welcomeText: {
+    fontSize: 26,
     fontWeight: 'bold',
+    color: '#B8860B', // Dark gold color for text
+    marginBottom: 8,
   },
-  progressContainer: {
-    backgroundColor: '#232128',
-    padding: 16,
-    borderRadius: 10,
-    marginBottom: 20,
-  },
-  progressTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 5,
-    color: 'white',
-  },
-  progressSubtitle: {
+  subText: {
     fontSize: 14,
-    color: '#6c757d',
-    marginBottom: 10,
+    color: '#7F8C8D', // Muted gray for secondary text
   },
-  progressBarBackground: {
-    height: 10,
-    backgroundColor: '#d3d3d3',
-    borderRadius: 5,
-    overflow: 'hidden',
+  torchImage: {
+    width: 70,
+    height: 90,
+    marginLeft: 15,
   },
-  progressBarFill: {
-    height: '100%',
-    backgroundColor: '#724ab6',
-  },
-  progressPercentage: {
-    textAlign: 'right',
-    fontWeight: 'bold',
-    fontSize: 16,
-    color: 'white',
-    marginTop: 5,
-  },
+
   tasksection:{
    
   },
   taskContainer: {
-    marginBottom: 10
   },
   message: {
     fontSize: 18,
@@ -231,55 +262,67 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   task: {
-    backgroundColor: '#232128',
+    backgroundColor: '#FFFFFF',
     padding: 16,
-    borderRadius: 10,
+    marginHorizontal: 16,
+    borderRadius: 15,
     marginBottom: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 5,
   },
-  taskTitle: {
-    fontSize: 18,
+  taskTitles: {
+    fontSize: 16,
     fontWeight: 'bold',
-    color: 'green',
+    color: '#7F8C8D',
   },
   taskDescription: {
     fontSize: 14,
-    color: 'white',
+    color: '#7F8C8D',
   },
   taskDueDate: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: 'white',
+    color: '#7F8C8D',
   },
   headerTask:{
     fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 20,
-    color: 'white',
+    marginBottom: 10,
+    marginLeft: 16,
+    color: '#7F8C8D',
   },
   taskCategoryContainer: {
     flexDirection: 'column',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
+    marginHorizontal: 16,
   },
   taskCategory: {
     width: '100%',
     flexDirection:'row',
     alignItems: 'center',
-    backgroundColor: '#232128',
+    backgroundColor: '#FFFFFF',
     padding: 16,
     borderRadius: 10,
-    marginBottom: 5,
+    marginBottom: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 5,
   },
   taskCount: {
     fontSize: 14,
-    fontWeight: 'bold',
-    color: 'white',
+    color: '#7F8C8D',
    marginLeft: 10
   },
   taskTitle: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
-    color: 'white',
+    color: '#7F8C8D',
   },
 });
 

@@ -1,12 +1,11 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, Alert, Image } from 'react-native';
+
+import {Image } from 'react-native';
 import { SQLiteProvider } from 'expo-sqlite';
 import { NavigationContainer, useIsFocused } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { useState } from 'react';
-import { Ionicons } from '@expo/vector-icons';
-
+import { registerBackgroundTask } from './screens/utils/notifications';
+import { useEffect } from 'react';
 import Home from './screens/Home';
 import AddTask from './screens/AddTask';
 import MyTasks from './screens/MyTasks';
@@ -22,7 +21,7 @@ import Test from './screens/Test';
 
 // Initialize the database
 const getRandomName = () => {
-  const names = ['John', 'Alice', 'Bob', 'Charlie', 'Eve', 'Zara', 'Liam', 'Sophia', 'Lucas', 'Olivia'];
+  const names = ['Wanderer', 'Lone Wolf', 'Boss'];
   const randomIndex = Math.floor(Math.random() * names.length);
   return names[randomIndex];
 };
@@ -36,7 +35,7 @@ const initializeDatabase = async (db) => {
           user_id INTEGER PRIMARY KEY,  
           username TEXT DEFAULT 'Adventurer',
           experience INTEGER DEFAULT 0,
-          profile_picture TEXT,
+          profile_picture TEXT DEFAULT '',
           level INTEGER DEFAULT 1,
           title TEXT
         );
@@ -54,7 +53,7 @@ const initializeDatabase = async (db) => {
           status TEXT,
           date_created DATETIME DEFAULT CURRENT_TIMESTAMP,
           due_date DATETIME,
-          difficulty TEXT CHECK (difficulty IN ('easy', 'medium', 'hard'))  
+          difficulty TEXT CHECK (difficulty IN ('Easy', 'Medium', 'Hard'))  
         );
       
         CREATE TABLE IF NOT EXISTS subtasks (
@@ -101,38 +100,53 @@ function MyTabs() {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
-          let iconName;
+          let iconSource;
 
           if (route.name === 'Home') {
-            iconName = focused ? 'home' : 'home-outline';
-          } else if (route.name === 'Quest Log') {
-            iconName = focused ? 'stats-chart' : 'stats-chart-outline';
-          } else if (route.name === 'Quest Board') {
-            iconName = focused ? 'list' : 'list-outline';
+            iconSource = focused
+              ? require('./assets/icons/castle-focused.png') // Focused icon
+              : require('./assets/icons/castle.png'); // Default icon
+          } else if (route.name === 'Challenges') {
+            iconSource = focused
+              ? require('./assets/icons/challenges-focused.png')
+              : require('./assets/icons/challenges.png');
+          }else if (route.name === 'Create Task') {
+            iconSource = focused
+              ? require('./assets/icons/anvil-focused.png')
+              : require('./assets/icons/anvil.png');
+          } else if (route.name === 'Quests') {
+            iconSource = focused
+              ? require('./assets/icons/map-focused.png')
+              : require('./assets/icons/map.png');
           } else if (route.name === 'Profile') {
-            iconName = focused ? 'person' : 'person-outline';
+            iconSource = focused
+              ? require('./assets/icons/profile.png')
+              : require('./assets/icons/profile.png');
           }
 
-          return <Ionicons name={iconName} size={24} color={color} />;
+          return (
+            <Image
+              source={iconSource}
+              style={{ width: 35, height: 35, tintColor: color }} // Adjust size and color
+            />
+          );
         },
         tabBarShowLabel: true,
-        tabBarStyle: { backgroundColor: '#1b181c', height: 50, borderTopColor:'#1b181c' },
-        tabBarActiveTintColor: 'white',
-        tabBarInactiveTintColor: '#8e8e93',
+        tabBarStyle: { backgroundColor: '#2C3E50', height: 60, borderTopColor:'#2C3E50', paddingBottom: 2},
+        tabBarActiveTintColor: '#FFFFFF',
+        tabBarInactiveTintColor: '#95A5A6',
         headerShown: false,
         borderTopWidth: 0, // Remove border
         elevation: 0, // Remove shadow for Android
         shadowOpacity: 0, // Remove shadow for iOS
-        
-        
       })}
     >
       <Tab.Screen name="Home" component={Home} />
-      <Tab.Screen name="Quest Log" component={Achievements} />
-
-      {/* Custom Center Button */}
+      <Tab.Screen name="Challenges" component={Achievements} />
+      <Tab.Screen name="Create Task" component={AddTask} />
+      {/* Custom Center Button 
       <Tab.Screen
-        name="CenterButton"
+        name="AddTask"
         component={AddTask}
         options={{
           tabBarButton: (props) => {
@@ -153,18 +167,18 @@ function MyTabs() {
                 <Image
                   source={
                     isFocused
-                      ? require('./assets/plus-shield-focus.png') // Image for the focused state
-                      : require('./assets/plus-shield.png') // Default image 
+                      ? require('./assets/icons/anvil-focused.png') // Image for focused state
+                      : require('./assets/icons/anvil.png') // Default image
                   }
-                  style={{ width: 40, height: 40, alignItems: 'center'}}
+                  style={{ width: 30, height: 30, alignItems: 'center' }}
                 />
               </TouchableOpacity>
             );
           },
         }}
       />
-
-      <Tab.Screen name="Quest Board" component={MyTasks} />
+      */}
+      <Tab.Screen name="Quests" component={MyTasks} />
       <Tab.Screen name="Profile" component={Profile} />
     </Tab.Navigator>
   );
@@ -172,6 +186,11 @@ function MyTabs() {
 
 
 export default function App() {
+  useEffect(() => {
+    console.log('background task is running')
+    registerBackgroundTask();
+  }, []);
+
   return (
     <SQLiteProvider databaseName='auth.db' onInit={initializeDatabase}>
       <NavigationContainer>
