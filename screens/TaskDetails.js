@@ -99,11 +99,11 @@ export default function TaskDetails({ route, navigation }) {
       const result = await db.runAsync('INSERT INTO subtasks (task_id, subtask_title, status) VALUES (?, ?, ?)', [
         taskId,
         newSubtask,
-        'incomplete',
+        'pending',
       ]);
       setSubtasks((prevSubtasks) => [
         ...prevSubtasks,
-        { subtask_id: result.lastInsertRowid, subtask_title: newSubtask, status: 'incomplete' },
+        { subtask_id: result.lastInsertRowId, subtask_title: newSubtask, status: 'pending' },
       ]);
       setNewSubtask('');
     } catch (error) {
@@ -165,7 +165,10 @@ export default function TaskDetails({ route, navigation }) {
 
           {/* Difficulty Picker */}
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>Difficulty   </Text>
+            <View style={{flexDirection: 'row', alignItems: 'center'}}>
+              <Ionicons name="star" size={20} color="#7F8C8D" style={{marginRight: 10}} />
+              <Text style={styles.label}>Difficulty   </Text>
+            </View>
             <View style={styles.pickerContainer}>
               {isEditing ? (
                 <Picker
@@ -184,7 +187,10 @@ export default function TaskDetails({ route, navigation }) {
           </View>
 
           <View style={styles.dateTimeContainer}>
-            <Text style={styles.dateText}>Due Date </Text>
+            <View style={{flexDirection: 'row', alignItems: 'center'}}>
+              <Ionicons name="calendar" size={20} color="#7F8C8D" style={{marginRight: 10}}/>
+              <Text style={styles.dateText}>Due Date </Text>
+            </View>
             <Text style={styles.dateValue} onPress={() => setShowDatePicker(true)}>{formatDueDate(dueDate)}</Text>
           </View>
 
@@ -194,7 +200,10 @@ export default function TaskDetails({ route, navigation }) {
 
           {dueDate && (
             <View style={styles.dateTimeContainer}>
-              <Text style={styles.dateText}>Time </Text>
+              <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                  <Ionicons name="time" size={20} color="#7F8C8D" style={{marginRight: 10}}/>
+                  <Text style={styles.dateText}>Time </Text>
+              </View>
               <Text style={styles.timeValue} onPress={() => setShowTimePicker(true)}>{formatDueTime(dueTime)}</Text>
             </View>
           )}
@@ -258,7 +267,7 @@ const styles = StyleSheet.create({
   container: { 
     flex: 1, 
     padding: 16,
-    backgroundColor: '#FFFFFF'
+    backgroundColor: '#1e2026'
   },
   header: { 
     flexDirection: 'row', 
@@ -286,7 +295,7 @@ const styles = StyleSheet.create({
     fontSize: 24, 
     fontWeight: 'bold', 
     marginBottom: 16,
-    color: '#B8860B'
+    color: '#f2f3f2'
   },
   input: { 
     width: '100%', 
@@ -308,14 +317,13 @@ const styles = StyleSheet.create({
     
   },
   pickerContainer:{
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#2c2f35',
     height: 30,
     borderRadius:10,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 10,
-    borderWidth: .5,
-    borderColor: '#7F8C8D'
+
     
   },
   label: { 
@@ -341,23 +349,19 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#7F8C8D',
     paddingHorizontal: 5,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#2c2f35',
     height: 30,
     borderRadius:10,
     paddingTop: 4,
-    borderWidth: .5,
-    borderColor: '#7F8C8D'
   },
   timeValue:{
     fontSize: 16,
     color: '#7F8C8D',
     paddingHorizontal: 5,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#2c2f35',
     height: 30,
     borderRadius:10,
     paddingTop: 4,
-    borderWidth: .5,
-    borderColor: '#7F8C8D'
   },
   calendarButton: { 
     padding: 8 
@@ -366,6 +370,7 @@ const styles = StyleSheet.create({
     padding: 8 
   },
   dateText: { 
+    alignItems: 'center',
     fontSize: 16,
     color: '#7F8C8D'
   },

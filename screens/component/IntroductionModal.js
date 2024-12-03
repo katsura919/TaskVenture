@@ -121,7 +121,7 @@ const styles = StyleSheet.create({
   dialogueContainer: {
     width: '90%',
     padding: 20,
-    backgroundColor: '#2C3E50',
+    backgroundColor: '#1e2026',
     borderRadius: 10,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.2)',

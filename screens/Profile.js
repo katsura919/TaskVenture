@@ -93,6 +93,9 @@ const Profile = () => {
 
   const achievementIcons = {
     "dedicated.png": require("../assets/achievements/dedicated.png"),
+    "dedicated2.png": require("../assets/achievements/dedicated2.png"),
+    "taskmaniac.png": require("../assets/achievements/taskmaniac.png"),
+    "levelup.png": require("../assets/achievements/taskmaniac.png"),
   };
 
   useEffect(() => {
@@ -139,22 +142,22 @@ const Profile = () => {
 
    // List of images with unlock levels
    const unlockableImages = [
-    { source: require("../assets/avatars/ninja.gif"), level: 1 },
-    { source: require("../assets/avatars/ninja1.gif"), level: 1 },
-    { source: require("../assets/avatars/knightmove.gif"), level: 1 },
-    { source: require("../assets/avatars/knight2.gif"), level: 1 },
     { source: require("../assets/avatars/gamer.png"), level: 1 },
     { source: require("../assets/avatars/woman.png"), level: 1 },
     { source: require("../assets/avatars/astronaut.png"), level: 1 },
     { source: require("../assets/avatars/african1.png"), level: 1 },
-    { source: require("../assets/avatars/african2.png"), level: 1 },
-    { source: require("../assets/avatars/boy.png"), level: 1 },
-    { source: require("../assets/avatars/hacker.png"), level: 1 },
-    { source: require("../assets/avatars/knight.png"), level: 1 },
-    { source: require("../assets/avatars/meerkat.png"), level: 1 },
-    { source: require("../assets/avatars/spartan.png"), level: 1 },
-    { source: require("../assets/avatars/viking.png"), level: 1 },
-    { source: require("../assets/avatars/warrior.png"), level: 1 },
+    { source: require("../assets/avatars/african2.png"), level: 2},
+    { source: require("../assets/avatars/boy.png"), level: 2 },
+    { source: require("../assets/avatars/hacker.png"), level: 2 },
+    { source: require("../assets/avatars/knight.png"), level: 2 },
+    { source: require("../assets/avatars/meerkat.png"), level: 2 },
+    { source: require("../assets/avatars/spartan.png"), level: 2 },
+    { source: require("../assets/avatars/viking.png"), level: 2 },
+    { source: require("../assets/avatars/warrior.png"), level: 2 },
+    { source: require("../assets/avatars/ninja.gif"), level: 2},
+    { source: require("../assets/avatars/ninja1.gif"), level: 2},
+    { source: require("../assets/avatars/knightmove.gif"), level: 2},
+    { source: require("../assets/avatars/knight2.gif"), level: 2 },
     
 
   ];
@@ -333,8 +336,9 @@ const Profile = () => {
                     style={styles.imageOption}
                   >
                     {/* Image */}
+                    <View style={styles.avatarContainer}>
                     <Image source={item.source} style={styles.modalImage} />
-                    
+                    </View>
                     {/* Lock Overlay */}
                     {!isUnlocked(item.level) && (
                       <View style={styles.lockOverlay}>
@@ -378,7 +382,7 @@ const styles = StyleSheet.create({
   container: {
     alignItems: "center",
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#1e2026",
     padding: 16,
     paddingTop: 30
     
@@ -409,7 +413,7 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 24,
     fontWeight: "bold",
-    color: "gray",
+    color: "#f2f3f2",
   },
   title: {
     fontSize: 18,
@@ -425,7 +429,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "600",
     marginBottom: 10,
-    color: "#7F8C8D",
+    color: "#f2f3f2",
   },
   progressBarBackground: {
     width: 300,
@@ -455,7 +459,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#1e2026",
   },
   backbuttonContainer: {
     flexDirection: 'row',         // Align items in a row
@@ -498,6 +502,12 @@ const styles = StyleSheet.create({
   saveText:{
     color: '#FFFFFF'
   },
+  avatarContainer:{
+    width: 60,
+    height: 60,
+    borderRadius: 35, // Makes the image circular
+    overflow: 'hidden', 
+  },
   modalImage: {
     width: 60,
     height: 60,
@@ -510,12 +520,12 @@ const styles = StyleSheet.create({
   },
   lockOverlay: {
     position: "absolute",
-    width: 70,
-    height: 70,
+    width: 60,
+    height: 60,
     backgroundColor: "rgba(0, 0, 0, 0.6)",
     justifyContent: "center",
     alignItems: "center",
-    borderRadius: 35, // Ensures the overlay matches the circular image
+    borderRadius: 30, // Ensures the overlay matches the circular image
   },
   lockText: {
     fontSize: 24,
@@ -548,7 +558,7 @@ const styles = StyleSheet.create({
   achievementsHeader: {
     fontSize: 20,
     fontWeight: "bold",
-    color: "#7F8C8D",
+    color: "#f2f3f2",
     marginBottom: 10,
   },
   achievementItem: {

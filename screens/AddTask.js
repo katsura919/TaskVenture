@@ -143,7 +143,7 @@ export default function AddTask() {
 
   return (
     <View style={styles.container}>
-
+      
       <IntroductionModal
         visible={showModal}
         onClose={handleCloseModal}
@@ -175,7 +175,7 @@ export default function AddTask() {
 
       {/* Difficulty Picker */}
       <View style={styles.difficultyContainer}>
-        <Ionicons name="star" size={20} color="#7F8C8D" style={{marginRight: 5}} />
+        <Ionicons name="star" size={20} color="#7F8C8D" style={{marginRight: 10}} />
           <Text style={styles.label}>Difficulty </Text>
           <View style={styles.pickerContainer}>
           <Picker
@@ -191,7 +191,7 @@ export default function AddTask() {
       </View>
       
       <View style={styles.dateContainer}>
-      <Ionicons name="calendar" size={20} color="#7F8C8D" style={{marginRight: 5}}/>
+        <Ionicons name="calendar" size={20} color="#7F8C8D" style={{marginRight: 10}}/>
           <Text style={styles.label}>
             Due Date 
           </Text>
@@ -212,7 +212,7 @@ export default function AddTask() {
       </View>
 
       <View style={styles.timeContainer}>
-        <Ionicons name="time" size={20} color="#7F8C8D" style={{marginRight: 3}}/>
+        <Ionicons name="time" size={20} color="#7F8C8D" style={{marginRight: 10}}/>
               <Text style={styles.label}>Time  </Text>
               <View style={styles.dateWrapper}>
                 <Pressable onPress={() => setShowTimePicker(true)} style={styles.dateButton}>
@@ -280,7 +280,7 @@ export default function AddTask() {
 const styles = StyleSheet.create({
   container: { 
     flex: 1,
-    backgroundColor: '#FFFFFF', 
+    backgroundColor: '#1e2026', 
     padding: 20,
     alignItems: 'center',
   },
@@ -290,7 +290,7 @@ const styles = StyleSheet.create({
   title: { 
     fontSize: 24, 
     fontWeight: 'bold',
-    color: '#B8860B',
+    color: '#f2f3f2',
     flexDirection: 'row', 
     justifyContent: 'center', 
     alignItems: 'center', 
@@ -316,16 +316,14 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     color: '#7F8C8D',
-    fontWeight: '500',
   },
   pickerContainer:{
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#2c2f35',
     height: 30,
     borderRadius:10,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: .5,
-    borderColor: '#7F8C8D'
+
   },
   picker: {
     width: 140, 
@@ -349,11 +347,10 @@ const styles = StyleSheet.create({
     color: "#7F8C8D",
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#2c2f35',
     borderRadius:10,
     overflow: 'hidden',
-    borderWidth: .5,
-    borderColor: '#7F8C8D'
+
   },
   dateText: {
     color: '#7F8C8D',
@@ -366,8 +363,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
  
-  clearDateButton: {
-    
+  clearDateButton: { 
     padding: 12,
     backgroundColor: '#e74c3c',
     borderRadius: 12,
@@ -377,14 +373,14 @@ const styles = StyleSheet.create({
   addButton: {
     width: '100%', 
     height: 50, 
-    backgroundColor: '#2C3E50', 
+    backgroundColor: '#fbb95f', 
     padding: 5, 
     borderRadius: 10, 
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 15,
     marginTop: 20,
-    alignItems: 'center'
+    alignItems: 'center',
   },
   buttonText: { 
     fontSize: 18, 
@@ -426,11 +422,10 @@ const styles = StyleSheet.create({
     height: 40,
     padding: 10,
     borderRadius:10,
-    color: '#FFFFFF',
+    backgroundColor: '#2c2f35',
     alignItems: 'center',
-    borderWidth: .5,
     marginBottom: 10,
-    borderColor: '#7F8C8D'
+
   },
   removeText: {
     color: 'white',
@@ -446,19 +441,17 @@ const styles = StyleSheet.create({
     marginBottom: 10
   },
   subTaskInput: {
-    width: 270, // Set width to 50% of the container
+  flex: 1,
     height: 40,
-    borderWidth: 1,
-    borderColor: '#ccc',
     borderRadius:10,
     paddingHorizontal: 10,
-    backgroundColor: '#fff',
-    marginRight: 5, // Add a small gap between input and button
+    backgroundColor: '#FFFFFF',
+    marginRight: 8, // Add a small gap between input and button
   },
   addSubButton: {
     width: 42, // Set width to 50% of the container
     height: 40, // Match the input height for alignment
-    backgroundColor: '#2C3E50',
+    backgroundColor: '#2c2f35',
     borderRadius:10,
     justifyContent: 'center',
     alignItems: 'center',

@@ -17,7 +17,7 @@ const achievementsData = [
     id: 2,
     title: "Task Expert",
     description: "Complete 50 tasks.",
-    required: 50,
+    required: 5,
     icon: "dedicated2.png",
   },
   {
@@ -296,11 +296,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#1e2026",
   },
   header: {
     fontSize: 24,
-    color: '#B8860B',
+    color: '#f2f3f2',
     fontWeight: "bold",
     marginBottom: 20,
     textAlign: 'center',
@@ -314,7 +314,7 @@ const styles = StyleSheet.create({
   navButton: {
     paddingVertical: 10,
     paddingHorizontal: 20,
-    backgroundColor: "#2C3E50",
+    backgroundColor: "#2c2f35",
     borderRadius: 5,
   },
   navButtonText: {
@@ -323,16 +323,16 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
   },
   activeTabButton: {
-    backgroundColor: "#2C3E50",
+    backgroundColor: "#2c2f35",
   },
   achievementContainer: {
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 20,
-    backgroundColor: "#2C3E50",
+    backgroundColor: "#2c2f35",
     borderRadius: 15,
     padding: 10,
-    elevation: 5,
+
   },
   icon: {
     width: 50,

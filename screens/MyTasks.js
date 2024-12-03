@@ -248,7 +248,7 @@ export default function MyTasks({ navigation }) {
 const styles = StyleSheet.create({
   container: { 
     flex: 1, 
-    backgroundColor: '#FFFFFF', 
+    backgroundColor: '#1e2026', 
     padding: 16 
   },
   completedTask:{
@@ -271,7 +271,7 @@ const styles = StyleSheet.create({
   headerText: { 
     fontSize: 24, 
     fontWeight: 'bold',
-    color: '#B8860B'
+    color: '#f2f3f2'
   },
   taskListContainer: { 
     marginBottom: 20,

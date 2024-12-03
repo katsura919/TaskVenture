@@ -104,13 +104,13 @@ function MyTabs() {
 
           if (route.name === 'Home') {
             iconSource = focused
-              ? require('./assets/icons/castle-focused.png') // Focused icon
-              : require('./assets/icons/castle.png'); // Default icon
+              ? require('./assets/icons/castle-focused.png')
+              : require('./assets/icons/castle.png');
           } else if (route.name === 'Challenges') {
             iconSource = focused
               ? require('./assets/icons/challenges-focused.png')
               : require('./assets/icons/challenges.png');
-          }else if (route.name === 'Create Task') {
+          } else if (route.name === 'Create Task') {
             iconSource = focused
               ? require('./assets/icons/anvil-focused.png')
               : require('./assets/icons/anvil.png');
@@ -127,62 +127,41 @@ function MyTabs() {
           return (
             <Image
               source={iconSource}
-              style={{ width: 35, height: 35, tintColor: color }} // Adjust size and color
+              style={{ width: 30, height: 30, tintColor: color }}
             />
           );
         },
         tabBarShowLabel: true,
-        tabBarStyle: { backgroundColor: '#2C3E50', height: 60, borderTopColor:'#2C3E50', paddingBottom: 2},
-        tabBarActiveTintColor: '#FFFFFF',
-        tabBarInactiveTintColor: '#95A5A6',
-        headerShown: false,
-        borderTopWidth: 0, // Remove border
-        elevation: 0, // Remove shadow for Android
-        shadowOpacity: 0, // Remove shadow for iOS
+        tabBarStyle: {
+          backgroundColor: '#2c2f35', // Dark background
+          height: 60,
+          paddingBottom: 2,
+          elevation: 10, // Add elevation for Android shadow
+          shadowOpacity: 0.1, // Set shadow opacity for iOS
+          shadowOffset: { width: 0, height: 2 }, // Offset for shadow
+          shadowRadius: 8, // Shadow radius for iOS
+          position: 'absolute', // Make the tab bar float
+          left: 0,
+          right: 0,
+          borderTopWidth: 0, // Remove the top border
+          borderTopLeftRadius: 25,
+          borderTopRightRadius: 25,
+        },
+        tabBarActiveTintColor: '#7273c1', // Active tab icon color
+        tabBarInactiveTintColor: '#95A5A6', // Inactive tab icon color
+        headerShown: false, // Hide the header
       })}
     >
       <Tab.Screen name="Home" component={Home} />
       <Tab.Screen name="Challenges" component={Achievements} />
       <Tab.Screen name="Create Task" component={AddTask} />
-      {/* Custom Center Button 
-      <Tab.Screen
-        name="AddTask"
-        component={AddTask}
-        options={{
-          tabBarButton: (props) => {
-            const isFocused = useIsFocused(); // Check if this tab is focused
-
-            return (
-              <TouchableOpacity
-                {...props}
-                style={{
-                  top: 5,
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  width: 40,
-                  height: 40,
-                  marginHorizontal: 20,
-                }}
-              >
-                <Image
-                  source={
-                    isFocused
-                      ? require('./assets/icons/anvil-focused.png') // Image for focused state
-                      : require('./assets/icons/anvil.png') // Default image
-                  }
-                  style={{ width: 30, height: 30, alignItems: 'center' }}
-                />
-              </TouchableOpacity>
-            );
-          },
-        }}
-      />
-      */}
       <Tab.Screen name="Quests" component={MyTasks} />
       <Tab.Screen name="Profile" component={Profile} />
     </Tab.Navigator>
   );
 }
+
+
 
 
 export default function App() {

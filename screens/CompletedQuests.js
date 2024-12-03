@@ -62,7 +62,7 @@ export default function MyTasks({ navigation }) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerText}>My Quests</Text>
+        <Text style={styles.headerText}>Completed Quests</Text>
       </View>
       
       <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
@@ -170,7 +170,7 @@ export default function MyTasks({ navigation }) {
 const styles = StyleSheet.create({
   container: { 
     flex: 1, 
-    backgroundColor: '#121212', 
+    backgroundColor: '#1e2026', 
     padding: 16 
   },
   header: { 
