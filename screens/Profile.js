@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, Image, TouchableOpacity, Modal, FlatList, TextInput, Button} from "react-native";
+import React, { useState, useEffect, useRef } from "react";
+import { View, Text, StyleSheet, Image, TouchableOpacity, Modal, FlatList, TextInput, ScrollView, Animated, Easing} from "react-native";
 import { useSQLiteContext } from "expo-sqlite"; // Adjust based on your SQLite setup
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -7,7 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import IntroductionModal from './component/IntroductionModal';
 import AsyncStorage from '@react-native-async-storage/async-storage'; 
 
-const Profile = () => {
+const Profile = ({ navigation }) => {
   //Intro Modal
   const [showModal, setShowModal] = useState(false);
 
@@ -96,6 +96,7 @@ const Profile = () => {
     "dedicated2.png": require("../assets/achievements/dedicated2.png"),
     "taskmaniac.png": require("../assets/achievements/taskmaniac.png"),
     "levelup.png": require("../assets/achievements/taskmaniac.png"),
+    "momentum.png": require("../assets/achievements/momentum.png"),
   };
 
   useEffect(() => {
@@ -209,6 +210,31 @@ const Profile = () => {
     }
   };
 
+   
+  //Animations
+  const addtaskAnimation = useRef(new Animated.Value(0)).current; // Animation value
+
+  useFocusEffect(
+    React.useCallback(() => {
+      // Reset the animation value
+      addtaskAnimation.setValue(0);
+
+      // Start the fade-in animation
+      Animated.timing(addtaskAnimation, {
+        toValue: 1, // Fully visible
+        duration: 200, // Animation duration
+        easing: Easing.inOut(Easing.ease), // Smooth easing
+        useNativeDriver: true,
+      }).start();
+    }, [])
+  );
+
+  // Conditional rendering if needed (optional)
+  const animatedStyle = {
+    opacity: addtaskAnimation,
+  };
+
+  
   if (!profile) {
     return (
       <View style={styles.container}>
@@ -217,10 +243,23 @@ const Profile = () => {
     );
   }
 
- 
-  
   return (
-    <View style={styles.container}>
+    <Animated.View 
+    style={[
+      styles.container,
+      animatedStyle,
+      {
+        transform: [
+          {
+            scale: addtaskAnimation.interpolate({
+              inputRange: [0, 1],
+              outputRange: [1, 1], // Optional scale effect for smooth entry
+            }),
+          },
+        ],
+      },
+    ]}
+    >
       <IntroductionModal
         visible={showModal}
         onClose={handleCloseModal}
@@ -232,66 +271,93 @@ const Profile = () => {
         avatar={require('../assets/avatars/wizard.png')}
         name="Adventurer"
       />
-
-      {/* Profile Picture */}
-      <View style={styles.profileContainer}>
-        <Image source={profilePicture} style={styles.profileImage} />
-        
-      </View>
-
-      <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.editIconContainer}>
-          <Image style={styles.pen} source={require('../assets/icons/pen.png')}/>
-        </TouchableOpacity>
-
-      {/* Name */}
-      <Text style={styles.name}>{profile.username}</Text>
-
-      {/* Title */}
-      <Text style={styles.title}>{profile.title || "No title"}</Text>
-
-      {/* Level and Experience */}
-      <View style={styles.levelContainer}>
-        <Text style={styles.levelText}>Level {profile.level}</Text>
-
-        {/* Progress Bar */}
-        <View style={styles.progressBarBackground}>
-          <View
-            style={[
-              styles.progressBarFill,
-              { width: `${profile.experience}%` }, // Use experience as progress
-            ]}
-          />
-        </View>
-
-        <Text style={styles.expText}>
-          {Math.floor(profile.experience % 100)}/100 XP
-        </Text>
-      </View>
       
-      {/* Completed Achievements Section */}
-      <View style={styles.achievementsContainer}>
-        <Text style={styles.achievementsHeader}>Achievements</Text>
-        <FlatList
-            data={completedAchievements}
-            numColumns={3}
-            keyExtractor={(item) => item.achievement_id ? item.achievement_id.toString() : ''}
-            renderItem={({ item }) => {
-                
-              return (
-                <View style={styles.achievementItem}>
-                  <Image
-                  source={achievementIcons[item.icon]}
-                  style={styles.achievementIcon}
-                  />
-                  <Text style={styles.achievementTitle}>{item.title}</Text>
-                </View>
-              );
-            }}
-          />
-
-
-
+      <View >
+       <Image
+          source={require('../assets/profile-bg.jpg')} // Replace with your image URL or require local image
+          style={styles.background}
+        />
+         {/* Share Icon */}
+      <TouchableOpacity
+        style={styles.shareIconContainer}
+        onPress={() => navigation.navigate("ProfileShare")} // Navigate to ProfileShare screen
+      >
+        <Image
+          source={require("../assets/icons/share.png")} // Path to your share icon
+          style={styles.shareIcon}
+        />
+      </TouchableOpacity>
       </View>
+
+      <Animated.View 
+        style={styles.profileContent}
+      >
+          {/* Profile Picture */}
+          <View style={styles.profileContainer}>
+            <Image source={profilePicture} style={styles.profileImage} />
+            
+          </View>
+
+          <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.editIconContainer}>
+              <Image style={styles.pen} source={require('../assets/icons/pen.png')}/>
+          </TouchableOpacity>
+
+
+
+          {/* Name */}
+          <Text style={styles.name}>{profile.username}</Text>
+
+          {/* Title */}
+          <Text style={styles.title}>{profile.title || "No title"}</Text>
+
+          {/* Level and Experience */}
+          <View style={styles.levelContainer}>
+            <Text style={styles.levelText}>Level {profile.level}</Text>
+
+            {/* Progress Bar */}
+            <View style={styles.progressBarBackground}>
+              <View
+                style={[
+                  styles.progressBarFill,
+                  { width: `${profile.experience}%` }, // Use experience as progress
+                ]}
+              />
+            </View>
+            
+            <Text style={styles.expText}>
+              {Math.floor(profile.experience % 100)}/100 XP
+            </Text>
+          </View>
+          
+
+
+          {/* Completed Achievements Section */}
+        
+          <View style={styles.achievementsContainer}>
+            <Text style={styles.achievementsHeader}>Achievements</Text>
+            <ScrollView style={{height: 90, top: -90}}>
+            <FlatList
+                data={completedAchievements}
+                numColumns={3}
+                keyExtractor={(item) => item.achievement_id ? item.achievement_id.toString() : ''}
+                renderItem={({ item }) => {
+                    
+                  return (
+                    <View style={styles.achievementItem}>
+                      <Image
+                      source={achievementIcons[item.icon]}
+                      style={styles.achievementIcon}
+                      />
+                      <Text style={styles.achievementTitle}>{item.title}</Text>
+                    </View>
+                  );
+                }}
+                scrollEnabled={false}
+              />
+          </ScrollView>
+          </View>
+
+      </Animated.View>  
 
       {/* Modal for Image Selection */}
       <Modal
@@ -373,63 +439,89 @@ const Profile = () => {
               />
             </View>
       </Modal>
-
-    </View>
+                 
+    </Animated.View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    alignItems: "center",
+    flex: 1
+  },
+  background: {
+    width: '100%', // Full-width image
+    height: 200, // Adjust height as needed
+    resizeMode: 'cover', // Scales the image properly
+  },
+  shareIconContainer: {
+    position: "absolute",
+    top: 5, // Position the share icon near the top
+    right: 5, // Position the share icon near the right
+    padding: 8,
+    borderRadius: 20, // Rounded container for the icon
+  },
+  shareIcon: {
+    width: 35,
+    height: 35,
+   
+  },
+  profileContent:{
     flex: 1,
-    backgroundColor: "#1e2026",
-    padding: 16,
-    paddingTop: 30
-    
+    alignItems: 'center',
+    backgroundColor: '#f2f3f2',
+    marginBottom: 100
   },
   profileContainer:{
-    width: 150,
-    height: 150,
-    borderRadius: 75,
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    borderWidth: 10,
+    borderColor: '#f2f3f2',
+    backgroundColor: 'white',
     overflow: 'hidden',  // Ensures the GIF is clipped to the border radius
-    backgroundColor: 'lightblue'
+    justifyContent: 'center',
+    alignItems: 'center',
+    top: -90
   },
   profileImage: {
-    width: 150,
-    height: 150,
-    borderRadius: 75,
-
+    width: 170,
+    height: 170,
+    borderRadius: 85,
+    borderColor: '#5fa1fb',
   },
   editIconContainer: {
-    bottom: 30,
+    bottom: 130,
     right: -35,
     borderRadius: 15,
     padding: 5,
   },
   pen: {
     width: 30,
-    height: 30
+    height: 30,
   },
   name: {
     fontSize: 24,
     fontWeight: "bold",
-    color: "#f2f3f2",
+    color: "#1e2026",
+    top: -130
   },
   title: {
     fontSize: 18,
     fontStyle: "italic",
     color: "#7F8C8D",
+    top: -130
   },
   levelContainer: {
     alignItems: "center",
     marginTop: 20,
     width: "100%",
+    top: -130
   },
   levelText: {
     fontSize: 18,
     fontWeight: "600",
     marginBottom: 10,
-    color: "#f2f3f2",
+    color: "#1e2026",
   },
   progressBarBackground: {
     width: 300,
@@ -550,16 +642,20 @@ const styles = StyleSheet.create({
   },
 
   achievementsContainer: {
+    height: 300,
     marginTop: 30,
     width: "100%",
     paddingHorizontal: 20,
     alignItems: "center",
+    top: -60
+  
   },
   achievementsHeader: {
     fontSize: 20,
     fontWeight: "bold",
-    color: "#f2f3f2",
+    color: "#1e2026",
     marginBottom: 10,
+    top: -80
   },
   achievementItem: {
     flexDirection: "row",

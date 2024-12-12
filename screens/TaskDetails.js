@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, Alert, FlatList } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useSQLiteContext } from 'expo-sqlite';
@@ -218,8 +219,14 @@ export default function TaskDetails({ route, navigation }) {
             onChangeText={setNewSubtask}
             placeholder="Add a new subtask"
           />
+
+
           <TouchableOpacity style={styles.button} onPress={addSubtask}>
-            <Text style={styles.buttonText}>Add Subtask</Text>
+            <LinearGradient
+              colors={['rgba(0, 0, 0, 0.2)', 'rgba(0, 0, 0, 0)']}
+              style={styles.innerShadow}
+            />
+            <Text style={styles.buttonAddSubtask}>ADD SUBTASK</Text>
           </TouchableOpacity>
 
          
@@ -405,12 +412,31 @@ const styles = StyleSheet.create({
     color: '#999', // Optional: lighter color for completed tasks
   },
   button: {
-     backgroundColor: '#2C3E50', 
-     padding: 10, 
-     marginBottom: 16, 
-     alignItems: 'center',
-     borderRadius: 15
+    position: 'relative', // Needed for the inner shadow
+    backgroundColor: '#FF6347', // Tomato red
+    borderRadius: 25,
+    paddingVertical: 9,
+    paddingHorizontal: 35,
+    borderWidth: 3,
+    borderColor: '#FFDAB9', // Light peach border
+    overflow: 'hidden', // Ensures the inner shadow doesn't exceed borders
     },
+  innerShadow: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: 25, // Same as button
+    zIndex: 1, // Ensure it is on top of the button background
+    },
+  buttonAddSubtask:{
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    fontSize: 16,
+    textAlign: 'center',
+    zIndex: 2, // Ensure it stays above the inner shadow
+  },
   deleteSubtask:{
     justifyContent: 'flex-end',
     height: 40,

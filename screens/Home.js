@@ -1,5 +1,6 @@
-import React, {  useState, useEffect } from 'react';
-import { Animated, StatusBar, View, Text, StyleSheet, TouchableOpacity, Dimensions, Image, ScrollView } from 'react-native';
+import React, {  useState, useEffect, useRef } from 'react';
+import { Animated, StatusBar, View, Text, StyleSheet, TouchableOpacity, Easing, Image, ScrollView } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useFocusEffect } from '@react-navigation/native';
 import IntroductionModal from './component/IntroductionModal';
@@ -141,6 +142,34 @@ const Dashboard = ({navigation}) => {
     }, [])
   );
   
+  //Animations
+  const cardAnimation = useRef(new Animated.Value(0)).current; // For card entry
+  const headingAnimation = useRef(new Animated.Value(0)).current; // For card entry
+
+   useFocusEffect(
+    React.useCallback(() => {
+      // Reset the animation value
+      cardAnimation.setValue(0);
+      headingAnimation.setValue(0);
+      
+      // Start the fade-in animation
+      Animated.timing(headingAnimation, {
+        toValue: 1,
+        duration: 3000,
+        easing: Easing.out(Easing.exp),
+        useNativeDriver: true,
+      }).start();
+
+      // Start the animation
+      Animated.timing(cardAnimation, {
+        toValue: 1,
+        duration: 1000,
+        easing: Easing.out(Easing.exp),
+        useNativeDriver: true,
+      }).start();
+    }, [])
+  );
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#1e2026" />
@@ -157,7 +186,14 @@ const Dashboard = ({navigation}) => {
         name="Elder Mage"
       />
 
-      <View style={styles.headingSection}>
+      <Animated.View 
+         style={[
+          styles.headingSection,
+          {
+            opacity: headingAnimation, // Fade-in effect
+          },
+        ]}
+        >
         <View style={styles.avatarSection}>
           
           <TouchableOpacity style={styles.avatarContainer} onPress={() => navigation.navigate('Profile')}>
@@ -191,43 +227,57 @@ const Dashboard = ({navigation}) => {
             </View>
           </View>
         </View>
-      </View>
-
-    <ScrollView style={styles.scroll}>
-      <View style={styles.tasksection}>
-        <Text style={styles.headerTask}>Weekly Quests</Text>
-      
-
-      {/* Display tasks or message */}
-      <View style={styles.taskContainer}>
-        {tasksDueThisWeek === null ? (
-          <View  style={styles.task}>
-            <Text style={styles.taskDescription}>No more Quest for this week. Well done, Adventurer!</Text>
+      </Animated.View >
+    
+    <Animated.View 
+      style={[
+        styles.scrollContainer,
+        {
+          transform: [{ translateY: cardAnimation.interpolate({
+            inputRange: [0, 1],
+            outputRange: [300, 0], // Slide in from bottom
+          }) }],
+          opacity: cardAnimation, // Fade in effect
+        },
+      ]}
+      >
+      <ScrollView style={styles.scroll}>
+        <View style={styles.tasksection}>
+         <View style={{justifyContent: 'center', alignItems: 'center'}}>
+          <Text style={styles.headerTask}>WEEKLY QUESTS</Text>
           </View>
-        ) : (
-          tasksDueThisWeek.map((task) => (
-            <View key={task.task_id} style={styles.task}>
-              <Text style={styles.taskTitles}>{task.title}</Text>
-              <Text style={styles.taskDescription}>{task.description}</Text>
-              <Text style={styles.taskDueDate}>Due: {formatDueDate(task.due_date)}</Text>
+
+        {/* Display tasks or message */}
+        <View style={styles.taskContainer}>
+          {tasksDueThisWeek === null ? (
+            <View  style={styles.task}>
+              <Text style={styles.taskDescription}>No more Quest for this week. Well done, Adventurer!</Text>
             </View>
-          ))
-        )}
-      </View>
-      
+          ) : (
+            tasksDueThisWeek.map((task) => (
+              <View key={task.task_id} style={styles.task}>
+                <Text style={styles.taskTitles}>{task.title}</Text>
+                <Text style={styles.taskDescription}>{task.description}</Text>
+                <Text style={styles.taskDueDate}>Due: {formatDueDate(task.due_date)}</Text>
+              </View>
+            ))
+          )}
+        </View>
+        
 
-      <View >
-        <Text style={styles.headerTask}>Quest Difficulties</Text>
-      </View>
+        <View style={{justifyContent: 'center', alignItems: 'center'}}>
+          <Text style={styles.headerTask}>QUEST DIFFICULTIES</Text>
+        </View>
 
-      {/* Task Categories */}
-      <View style={styles.taskCategoryContainer}>
-        <TaskCategory title="Easy" newTasks={taskCounts.easy} />
-        <TaskCategory title="Medium" newTasks={taskCounts.medium} />
-        <TaskCategory title="Hard" newTasks={taskCounts.hard} />
+        {/* Task Categories */}
+        <View style={styles.taskCategoryContainer}>
+          <TaskCategory title="Easy" newTasks={taskCounts.easy} />
+          <TaskCategory title="Medium" newTasks={taskCounts.medium} />
+          <TaskCategory title="Hard" newTasks={taskCounts.hard} />
+        </View>
       </View>
-    </View>
-    </ScrollView>
+      </ScrollView>
+    </Animated.View>
     </View>
   );
 };
@@ -250,15 +300,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#1e2026',
   },
   headingSection:{
-    backgroundColor: '#7273c1',
-    borderBottomLeftRadius: 40,
-    borderBottomRightRadius: 40,
+    backgroundColor: '#1e2026',
+  },
+  scrollContainer:{
+    backgroundColor: '#f2f3f2',
+    borderTopLeftRadius: 50,
+    borderTopRightRadius: 50,
+    overflow: 'hidden', // Ensures the content respects the border radius
   },
   scroll:{
     width: '100%',
-    backgroundColor: '#1e2026',
-    paddingTop: 20,
-  
   },
   avatarSection:{
     display: 'flex',
@@ -295,6 +346,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row', // Align text and torch side by side
     alignItems: 'center',
   },
+  innerShadow: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 20, // Covers only the top half
+    borderRadius: 50, // Matches the button's border radius
+    zIndex: 1, // Ensure it overlays the button background
+  },
   textContainer: {
     flex: 1, // Allow text to take up available space
   },
@@ -304,9 +364,9 @@ const styles = StyleSheet.create({
     color: '#f2f3f2', // Dark gold color for text
   },
   subText: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#f2f3f2', // Muted gray for secondary text
-    top: -10
+    top: -7
   },
   wandContainer:{
     width:90,
@@ -358,18 +418,18 @@ const styles = StyleSheet.create({
     color: '#7F8C8D',
   },
   headerTask:{
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
+    marginTop: 10,
     marginBottom: 10,
-    marginLeft: 16,
-    color: '#f2f3f2',
+    color: '#1e2026',
   },
   taskCategoryContainer: {
     flexDirection: 'column',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
     marginHorizontal: 16,
-    marginBottom: 80
+    marginBottom: 300
   },
   taskCategory: {
     width: '100%',

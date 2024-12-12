@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, TextInput, Pressable, Alert, TouchableOpacity, ScrollView} from 'react-native'; 
+import React, { useState, useEffect, useRef } from 'react';
+import { StyleSheet, Text, View, TextInput, Pressable, Alert, TouchableOpacity, ScrollView, Animated, Easing} from 'react-native'; 
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useFocusEffect } from '@react-navigation/native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Picker } from '@react-native-picker/picker';  // Import Picker component
 import Feather from '@expo/vector-icons/Feather';
 import { Ionicons } from '@expo/vector-icons';
@@ -141,8 +142,35 @@ export default function AddTask() {
     setDueTime(null);
   };
 
+  //Animations
+  const addtaskAnimation = useRef(new Animated.Value(0)).current; // Animation value
+
+  useFocusEffect(
+    React.useCallback(() => {
+      // Reset the animation value
+      addtaskAnimation.setValue(0);
+
+      // Start the fade-in animation
+      Animated.timing(addtaskAnimation, {
+        toValue: 1, // Fully visible
+        duration: 500, // Animation duration
+        easing: Easing.inOut(Easing.ease), // Smooth easing
+        useNativeDriver: true,
+      }).start();
+    }, [])
+  );
+
+  // Conditional rendering if needed (optional)
+  const animatedStyle = {
+    opacity: addtaskAnimation,
+  };
+
   return (
-    <View style={styles.container}>
+    <View 
+      style={
+        styles.container
+      }
+    >
       
       <IntroductionModal
         visible={showModal}
@@ -156,7 +184,23 @@ export default function AddTask() {
       />
 
       <Text style={styles.title}>New Quest</Text>
-    <ScrollView style={styles.scroll}>
+
+    <Animated.ScrollView 
+      style={[
+        styles.scroll,
+        animatedStyle,
+        {
+          transform: [
+            {
+              scale: addtaskAnimation.interpolate({
+                inputRange: [0, 1],
+                outputRange: [0.99, 1], // Optional scale effect for smooth entry
+              }),
+            },
+          ],
+        },
+      ]}
+    >
       <TextInput
         style={styles.input}
         placeholder="Quest Title"
@@ -267,12 +311,21 @@ export default function AddTask() {
           </TouchableOpacity>
         </View>
       ))}
-    </View>
 
-      <Pressable style={styles.addButton} onPress={handleAddTask}>
-      <Feather name="check" size={30} color="white" />
-      </Pressable>
-      </ScrollView>
+    </View>
+      <View style={styles.addButtonContainer} >
+         
+      <TouchableOpacity style={styles.addButton} onPress={handleAddTask}>
+        {/* Inner Shadow Layer */}
+        <LinearGradient
+          colors={['rgba(0, 0, 0, 0.2)', 'rgba(0, 0, 0, 0)']}
+          style={styles.innerShadow}
+        />
+        <Text style={styles.buttonText}>ADD QUEST</Text>
+      </TouchableOpacity>
+      </View>
+
+      </Animated.ScrollView>
     </View>
   );
 }
@@ -370,22 +423,34 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     alignItems: 'center',
   },
+  addButtonContainer:{
+    marginTop: 5
+  },
+  innerShadow: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: 25, // Same as button
+    zIndex: 1, // Ensure it is on top of the button background
+  },
   addButton: {
-    width: '100%', 
-    height: 50, 
-    backgroundColor: '#fbb95f', 
-    padding: 5, 
-    borderRadius: 10, 
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 15,
-    marginTop: 20,
-    alignItems: 'center',
+    position: 'relative', // Needed for the inner shadow
+    backgroundColor: '#FF6347', // Tomato red
+    borderRadius: 25,
+    paddingVertical: 9,
+    paddingHorizontal: 35,
+    borderWidth: 3,
+    borderColor: '#FFDAB9', // Light peach border
+    overflow: 'hidden', // Ensures the inner shadow doesn't exceed borders
   },
   buttonText: { 
-    fontSize: 18, 
-    color: '#fff',
+    color: '#FFFFFF',
     fontWeight: 'bold',
+    fontSize: 16,
+    textAlign: 'center',
+    zIndex: 2, // Ensure it stays above the inner shadow
   },
 
   subtaskInputContainer:{

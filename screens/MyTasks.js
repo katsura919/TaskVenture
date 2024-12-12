@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, FlatList, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { StyleSheet, Text, View, FlatList, TouchableOpacity, ScrollView, Animated, Easing} from 'react-native';
 import { Ionicons } from '@expo/vector-icons'; // Import Expo Ionicons
 import { useSQLiteContext } from 'expo-sqlite';
 import { useFocusEffect } from '@react-navigation/native';
@@ -119,6 +119,28 @@ export default function MyTasks({ navigation }) {
     }, [])
   );
 
+
+   //Animations
+   const addtaskAnimation = useRef(new Animated.Value(0)).current; // Animation value
+
+   useFocusEffect(
+     React.useCallback(() => {
+       // Reset the animation value
+       addtaskAnimation.setValue(0);
+   
+       // Start the fade-in animation
+       Animated.timing(addtaskAnimation, {
+         toValue: 1, // Fully visible
+         duration: 500, // Animation duration
+         easing: Easing.inOut(Easing.ease), // Smooth easing
+         useNativeDriver: true,
+       }).start();
+     }, [])
+   );
+   // Conditional rendering if needed (optional)
+  const animatedStyle = {
+  opacity: addtaskAnimation,
+};
   return (
     <View style={styles.container}>
       <IntroductionModal
@@ -137,7 +159,23 @@ export default function MyTasks({ navigation }) {
       <View style={styles.header}>
         <Text style={styles.headerText}>My Quests</Text>
       </View>
-      <ScrollView>
+
+      <Animated.ScrollView 
+        style={[
+          styles.scrollContainer,
+         animatedStyle,
+          {
+            transform: [
+              {
+                scale: addtaskAnimation.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0.99, 1], // Optional scale effect for smooth entry
+                }),
+              },
+            ],
+          },
+        ]}
+      >
       <TouchableOpacity
               style={styles.completedTask}
               onPress={() => navigation.navigate('CompletedTasks')}
@@ -239,7 +277,7 @@ export default function MyTasks({ navigation }) {
           scrollEnabled={false}
         />
       </View>
-      </ScrollView>
+      </Animated.ScrollView>
 
     </View>
   );
@@ -249,7 +287,8 @@ const styles = StyleSheet.create({
   container: { 
     flex: 1, 
     backgroundColor: '#1e2026', 
-    padding: 16 
+    padding: 16,
+    paddingBottom: 60
   },
   completedTask:{
     flexDirection: 'row', // Ensures the text can be aligned in a row

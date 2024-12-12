@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, ScrollView } from "react-native";
+import React, { useEffect, useState, useRef} from "react";
+import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, ScrollView, Animated, Easing} from "react-native";
 import { useSQLiteContext } from "expo-sqlite"; // Assuming you're using a custom SQLite context
 import { useFocusEffect } from '@react-navigation/native';
 import IntroductionModal from './component/IntroductionModal';
@@ -17,7 +17,7 @@ const achievementsData = [
     id: 2,
     title: "Task Expert",
     description: "Complete 50 tasks.",
-    required: 5,
+    required: 50,
     icon: "dedicated2.png",
   },
   {
@@ -27,21 +27,29 @@ const achievementsData = [
     required: 100,
     icon: "taskmaniac.png",
   },
+  {
+    id: 4,
+    title: "Momentum Builder",
+    description: "Complete 10 tasks in a row.",
+    required: 10,
+    icon: "momentum.png",
+  },
+  
 ];
 
 const achievementsLevel = [
   {
-    id: 1,
+    id: 5,
     title: "Rising Star",
     description: "Reach Level 2.",
     required: 2,
     icon: "levelup.png",
   },
   {
-    id: 2,
+    id: 6,
     title: "Seasoned Adventurer",
     description: "Reach Level 5.",
-    required: 5,
+    required: 10,
     icon: "levelup.png",
   },
 
@@ -177,6 +185,30 @@ const AchievementScreen = () => {
     await AsyncStorage.setItem('AchievementIntro', 'true');
     setShowModal(false);
   };
+
+  //Animations
+  const addtaskAnimation = useRef(new Animated.Value(0)).current; // Animation value
+
+  useFocusEffect(
+    React.useCallback(() => {
+      // Reset the animation value
+      addtaskAnimation.setValue(0);
+
+      // Start the fade-in animation
+      Animated.timing(addtaskAnimation, {
+        toValue: 1, // Fully visible
+        duration: 500, // Animation duration
+        easing: Easing.inOut(Easing.ease), // Smooth easing
+        useNativeDriver: true,
+      }).start();
+    }, [])
+  );
+
+  // Conditional rendering if needed (optional)
+  const animatedStyle = {
+    opacity: addtaskAnimation,
+  };
+
   return (
     <View style={styles.container}>
       
@@ -211,7 +243,21 @@ const AchievementScreen = () => {
 
       {/* Conditional Rendering Based on Active Tab */}
       {activeTab === "ongoing" ? (
-        <ScrollView>
+        <Animated.ScrollView
+        style={[
+          animatedStyle,
+          {
+            transform: [
+              {
+                scale: addtaskAnimation.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0.99, 1], // Optional scale effect for smooth entry
+                }),
+              },
+            ],
+          },
+        ]}
+        >
           <FlatList
             data={achievementsData.filter((item) => taskCount < item.required)}
             keyExtractor={(item) => item.id.toString()}
@@ -271,7 +317,7 @@ const AchievementScreen = () => {
             }}
             scrollEnabled={false}
           />
-        </ScrollView>
+        </Animated.ScrollView>
       ) : (
         <FlatList
           data={completedAchievements}

@@ -5,6 +5,7 @@ import { NavigationContainer, useIsFocused } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { registerBackgroundTask } from './screens/utils/notifications';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useEffect } from 'react';
 import Home from './screens/Home';
 import AddTask from './screens/AddTask';
@@ -14,6 +15,7 @@ import CompletedQuests from './screens/CompletedQuests';
 import Profile from './screens/Profile';
 import ChangePassword from './screens/ChangePassword';
 import Achievements from './screens/Achievements';
+import ProfileShare from './screens/ProfileShare';
 import Test from './screens/Test';
 
 
@@ -133,7 +135,7 @@ function MyTabs() {
         },
         tabBarShowLabel: true,
         tabBarStyle: {
-          backgroundColor: '#2c2f35', // Dark background
+          backgroundColor: '#1e2026', // Dark background
           height: 60,
           paddingBottom: 2,
           elevation: 10, // Add elevation for Android shadow
@@ -141,13 +143,14 @@ function MyTabs() {
           shadowOffset: { width: 0, height: 2 }, // Offset for shadow
           shadowRadius: 8, // Shadow radius for iOS
           position: 'absolute', // Make the tab bar float
+          marginHorizontal:10,
           left: 0,
           right: 0,
+          bottom: 10,
           borderTopWidth: 0, // Remove the top border
-          borderTopLeftRadius: 25,
-          borderTopRightRadius: 25,
+          borderRadius: 25,
         },
-        tabBarActiveTintColor: '#7273c1', // Active tab icon color
+        tabBarActiveTintColor: '#f2f3f2', // Active tab icon color
         tabBarInactiveTintColor: '#95A5A6', // Inactive tab icon color
         headerShown: false, // Hide the header
       })}
@@ -171,6 +174,7 @@ export default function App() {
   }, []);
 
   return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
     <SQLiteProvider databaseName='auth.db' onInit={initializeDatabase}>
       <NavigationContainer>
         <Stack.Navigator initialRouteName='HomeTabs' screenOptions={{ headerShown: false }}>
@@ -178,8 +182,10 @@ export default function App() {
           <Stack.Screen name='ChangePassword' component={ChangePassword} />
           <Stack.Screen name='TaskDetails' component={TaskDetails} />
           <Stack.Screen name='CompletedTasks' component={CompletedQuests} />
+          <Stack.Screen name='ProfileShare' component={ProfileShare} />
         </Stack.Navigator>
       </NavigationContainer>
     </SQLiteProvider>
+    </GestureHandlerRootView>
   );
 }

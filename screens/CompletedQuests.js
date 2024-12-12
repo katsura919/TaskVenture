@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, FlatList, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, View, FlatList, TouchableOpacity, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons'; // Import Expo Ionicons
 import { useSQLiteContext } from 'expo-sqlite';
 import { useFocusEffect } from '@react-navigation/native';
@@ -67,15 +67,16 @@ export default function MyTasks({ navigation }) {
       
       <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color="#fff" />
-    
         </TouchableOpacity>
 
+      <ScrollView>
       {/* Easy Tasks */}
       <View style={styles.taskListContainer}>
         <Text style={styles.categoryHeader}>Easy Tasks</Text>
         <FlatList
           data={easyTasks}
           keyExtractor={(item) => item.task_id.toString()}
+          scrollEnabled={false}
           renderItem={({ item }) => (
             <TouchableOpacity
               onPress={() => navigation.navigate('TaskDetails', { taskId: item.task_id })}
@@ -107,6 +108,7 @@ export default function MyTasks({ navigation }) {
         <FlatList
           data={mediumTasks}
           keyExtractor={(item) => item.task_id.toString()}
+          scrollEnabled={false}
           renderItem={({ item }) => (
             <TouchableOpacity
               onPress={() => navigation.navigate('TaskDetails', { taskId: item.task_id })}
@@ -138,6 +140,7 @@ export default function MyTasks({ navigation }) {
         <FlatList
           data={hardTasks}
           keyExtractor={(item) => item.task_id.toString()}
+          scrollEnabled={false}
           renderItem={({ item }) => (
             <TouchableOpacity
               onPress={() => navigation.navigate('TaskDetails', { taskId: item.task_id })}
@@ -162,7 +165,7 @@ export default function MyTasks({ navigation }) {
           )}
         />
       </View>
-
+      </ScrollView>
     </View>
   );
 }
