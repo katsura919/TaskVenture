@@ -77,7 +77,7 @@ const Profile = ({ navigation }) => {
         const user = result[0];
         setProfile(user);
         setNewName(user.username); // Initialize the name to the current name
-        setProfilePicture(user.profile_picture || "../assets/avatars/gamer.png"); // Default image
+        setProfilePicture(user.profile_picture); // Default image
         setSelectedTitle(user.title || "No title");
 
         // Fetch completed achievements for the user
@@ -95,10 +95,9 @@ const Profile = ({ navigation }) => {
     "dedicated.png": require("../assets/achievements/dedicated.png"),
     "dedicated2.png": require("../assets/achievements/dedicated2.png"),
     "taskmaniac.png": require("../assets/achievements/taskmaniac.png"),
-    "levelup.png": require("../assets/achievements/taskmaniac.png"),
-    "momentum.png": require("../assets/achievements/momentum.png"),
+    "levelup.png": require("../assets/achievements/levelup.png"),
+    "tasks.png": require("../assets/achievements/tasks.png"),
   };
-
   useEffect(() => {
    
 
@@ -143,22 +142,23 @@ const Profile = ({ navigation }) => {
 
    // List of images with unlock levels
    const unlockableImages = [
+    { source: require("../assets/avatars/knight.png"), level: 1 },
     { source: require("../assets/avatars/gamer.png"), level: 1 },
-    { source: require("../assets/avatars/woman.png"), level: 1 },
-    { source: require("../assets/avatars/astronaut.png"), level: 1 },
-    { source: require("../assets/avatars/african1.png"), level: 1 },
-    { source: require("../assets/avatars/african2.png"), level: 2},
-    { source: require("../assets/avatars/boy.png"), level: 2 },
-    { source: require("../assets/avatars/hacker.png"), level: 2 },
-    { source: require("../assets/avatars/knight.png"), level: 2 },
-    { source: require("../assets/avatars/meerkat.png"), level: 2 },
-    { source: require("../assets/avatars/spartan.png"), level: 2 },
-    { source: require("../assets/avatars/viking.png"), level: 2 },
-    { source: require("../assets/avatars/warrior.png"), level: 2 },
+    { source: require("../assets/avatars/woman.png"), level: 2 },
+    { source: require("../assets/avatars/meerkat.png"), level: 3},
+    { source: require("../assets/avatars/bear.png"), level: 3},
+    { source: require("../assets/avatars/boy.png"), level: 5 },
+    { source: require("../assets/avatars/chicken.png"), level: 6 },
+    { source: require("../assets/avatars/cyclops.png"), level: 10 },
+    { source: require("../assets/avatars/doctor.png"), level: 15 },
+    { source: require("../assets/avatars/dog.png"), level: 15 },
+    { source: require("../assets/avatars/gamer.png"), level: 15 },
+    { source: require("../assets/avatars/knight4.png"), level: 20 },
+    { source: require("../assets/avatars/knight2.gif"), level: 2 },
     { source: require("../assets/avatars/ninja.gif"), level: 2},
     { source: require("../assets/avatars/ninja1.gif"), level: 2},
-    { source: require("../assets/avatars/knightmove.gif"), level: 2},
-    { source: require("../assets/avatars/knight2.gif"), level: 2 },
+    { source: require("../assets/avatars/knightmove.gif"), level: 2 },
+
     
 
   ];
@@ -182,11 +182,11 @@ const Profile = ({ navigation }) => {
 
   const [availableTitles, setAvailableTitles] = useState([
     { title: "Brave Explorer", level: 1 },
-    { title: "Mystic Wanderer", level: 1},
-    { title: "Fearless Challenger", level: 1 },
-    { title: "Pathfinder", level: 1 },
-    { title: "Arcane Seeker", level: 1 },
-    { title: "Task Maniac", level: 1},
+    { title: "Mystic Wanderer", level: 2},
+    { title: "Fearless Challenger", level: 2 },
+    { title: "Pathfinder", level: 2},
+    { title: "Arcane Seeker", level: 5 },
+    { title: "Task Maniac", level: 5},
   ]);
 
   const updateProfileTitle = async (newTitle) => {
@@ -268,13 +268,13 @@ const Profile = ({ navigation }) => {
           'Here, you can choose your avatar, set your title, and track your progress on your epic journey.',
           'Keep an eye on your level, achievements, and the path you’ve walked so far. Your adventure is just beginning!',
         ]}
-        avatar={require('../assets/avatars/wizard.png')}
-        name="Adventurer"
+        avatar={require('../assets/avatars/viking.png')}
+        name="Bjorn"
       />
       
       <View >
        <Image
-          source={require('../assets/profile-bg.jpg')} // Replace with your image URL or require local image
+          source={require('../assets/background/bg2.png')} // Replace with your image URL or require local image
           style={styles.background}
         />
          {/* Share Icon */}
@@ -294,7 +294,7 @@ const Profile = ({ navigation }) => {
       >
           {/* Profile Picture */}
           <View style={styles.profileContainer}>
-            <Image source={profilePicture} style={styles.profileImage} />
+            <Image source={profilePicture || require('../assets/avatars/knight.png')} style={styles.profileImage} />
             
           </View>
 
@@ -446,7 +446,8 @@ const Profile = ({ navigation }) => {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1
+    flex: 1,
+    backgroundColor: '1e2026'
   },
   background: {
     width: '100%', // Full-width image
@@ -466,9 +467,9 @@ const styles = StyleSheet.create({
    
   },
   profileContent:{
-    flex: 1,
+    
     alignItems: 'center',
-    backgroundColor: '#f2f3f2',
+    backgroundColor: '#1e2026',
     marginBottom: 100
   },
   profileContainer:{
@@ -476,7 +477,7 @@ const styles = StyleSheet.create({
     height: 180,
     borderRadius: 90,
     borderWidth: 10,
-    borderColor: '#f2f3f2',
+    borderColor: '#1e2026',
     backgroundColor: 'white',
     overflow: 'hidden',  // Ensures the GIF is clipped to the border radius
     justifyContent: 'center',
@@ -502,7 +503,7 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 24,
     fontWeight: "bold",
-    color: "#1e2026",
+    color: "#fff",
     top: -130
   },
   title: {
@@ -521,7 +522,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "600",
     marginBottom: 10,
-    color: "#1e2026",
+    color: "#fff",
   },
   progressBarBackground: {
     width: 300,
@@ -653,7 +654,7 @@ const styles = StyleSheet.create({
   achievementsHeader: {
     fontSize: 20,
     fontWeight: "bold",
-    color: "#1e2026",
+    color: "#fff",
     marginBottom: 10,
     top: -80
   },

@@ -179,8 +179,8 @@ export default function AddTask() {
           'Here, you can add tasks—your challenges for the day. Each one brings you closer to your next victory!',
           'Ready to take on your first task? The adventure awaits!',
         ]}
-        avatar={require('../assets/avatars/wizard.png')}
-        name="Elder Mage"
+        avatar={require('../assets/avatars/wizard2.png')}
+        name="Eryndor"
       />
 
       <Text style={styles.title}>New Quest</Text>

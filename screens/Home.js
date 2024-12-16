@@ -125,7 +125,7 @@ const Dashboard = ({navigation}) => {
       if (result.length > 0) {
         const user = result[0]; // Assuming there's only one user
         setNewName(user.username); // Initialize the name to the current name
-        setProfilePicture(user.profile_picture || '../assets/avatars/gamer.png'); // Default avatar
+        setProfilePicture(user.profile_picture); // Default avatar
       }
 
     } catch (error) {
@@ -177,13 +177,13 @@ const Dashboard = ({navigation}) => {
         visible={showModal}
         onClose={handleCloseModal}
         dialogues={[
-          'Welcome, Adventurer! My name is Arcanor, your guide on this epic journey!',
+          'Welcome, Adventurer! My name is Aldric, your guide on this epic journey!',
           'TaskVenture is not just a to-do list app, it’s a quest for productivity!',
           'Complete tasks to earn experience, unlock achievements, and level up!',
           'Are you ready to begin your adventure?',
         ]}
-        avatar={require('../assets/avatars/wizard.png')}
-        name="Elder Mage"
+        avatar={require('../assets/avatars/knight.png')}
+        name="Aldric"
       />
 
       <Animated.View 
@@ -198,7 +198,7 @@ const Dashboard = ({navigation}) => {
           
           <TouchableOpacity style={styles.avatarContainer} onPress={() => navigation.navigate('Profile')}>
             <Image
-              source={profilePicture}
+              source={profilePicture || require('../assets/avatars/knight.png')}
               style={styles.avatar}
               
             />

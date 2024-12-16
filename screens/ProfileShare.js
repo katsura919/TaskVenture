@@ -157,11 +157,16 @@ const ProfileShare = () => {
         ]}
         ref={profileCardRef}
       >
-
+          <ImageBackground
+            source={require('../assets/background/bg2.png')}  // Use a URL or local image
+            style={styles.background}
+            imageStyle={styles.image} // This is for applying monochrome effects
+          >
+ 
           {/* Profile picture with bounce animation */}
         <View style={styles.profileImageContainer}>
           <Animated.Image
-            source={profile.profile_picture}
+            source={profile.profile_picture || require('../assets/avatars/knight.png')}
             style={[styles.profilePicture, { transform: [{ scale: profileBounce }] }]}
           />
           </View>
@@ -171,6 +176,18 @@ const ProfileShare = () => {
           <Text style={styles.level}>LEVEL {profile.level || "No level"}</Text>
           <Text style={styles.taskCountTitle}>COMPLETED TASKS</Text>
           <Text style={styles.taskCount}>{taskCount}</Text>
+
+          <Image
+            source={require('../assets/qr/qr.png')}
+            style={{
+              width: 100, 
+              height: 100, 
+              borderRadius: 15, 
+              marginTop: 15,
+              bottom: -40
+            }}
+          />
+          </ImageBackground>
       </Animated.View>
 
       {/* Share and Download buttons outside the card */}
@@ -198,6 +215,15 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: "#1e2026",
   },
+  background:{
+    flex: 1,
+    width: '100%',
+    justifyContent: 'center',  // Centers content vertically
+    alignItems: 'center',  // Centers content horizontally
+  },
+  image: {
+    opacity: 0.5,  // Adjust opacity of the image
+  },
   cardContainer: {
     width: "90%",
     height: "75%",
@@ -207,8 +233,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     position: "absolute",
     top: 70,
-    borderWidth: 5,
-    borderColor: "rgba(255, 255, 255, 0.2)",
     overflow: "hidden",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 10 },
@@ -231,7 +255,7 @@ const styles = StyleSheet.create({
   },
 
   username: {
-    fontSize: 41,             
+    fontSize: 35,             
     fontWeight: 'bold',       
     color: '#f2f3f2',         
     textAlign: 'center',   
@@ -242,11 +266,11 @@ const styles = StyleSheet.create({
     top: -10
   },
   level: {
-    fontSize: 16,
+    fontSize: 14,
     color: "#f2f3f2",
   },
   taskCountTitle: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "bold",
     color: "#FFD700",
     marginBottom: 5,

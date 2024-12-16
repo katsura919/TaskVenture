@@ -27,13 +27,7 @@ const achievementsData = [
     required: 100,
     icon: "taskmaniac.png",
   },
-  {
-    id: 4,
-    title: "Momentum Builder",
-    description: "Complete 10 tasks in a row.",
-    required: 10,
-    icon: "momentum.png",
-  },
+
   
 ];
 
@@ -42,15 +36,15 @@ const achievementsLevel = [
     id: 5,
     title: "Rising Star",
     description: "Reach Level 2.",
-    required: 2,
+    required: 10,
     icon: "levelup.png",
   },
   {
     id: 6,
     title: "Seasoned Adventurer",
     description: "Reach Level 5.",
-    required: 10,
-    icon: "levelup.png",
+    required: 50,
+    icon: "tasks.png",
   },
 
 ];
@@ -144,8 +138,8 @@ const AchievementScreen = () => {
     "dedicated.png": require("../assets/achievements/dedicated.png"),
     "dedicated2.png": require("../assets/achievements/dedicated2.png"),
     "taskmaniac.png": require("../assets/achievements/taskmaniac.png"),
-    "gladiator.png": require("../assets/avatars/gladiator.png"),
-    "levelup.png": require("../assets/achievements/levelup.png")
+    "levelup.png": require("../assets/achievements/levelup.png"),
+    "tasks.png": require("../assets/achievements/tasks.png"),
   };
 
   useFocusEffect(
@@ -220,8 +214,8 @@ const AchievementScreen = () => {
           'Unlock new feats, witness your growth, and continue your quest by pushing forward to even greater challenges.',
           'Are you ready to view your legendary achievements and discover what awaits on the path ahead?',
         ]}
-        avatar={require('../assets/avatars/wizard.png')}
-        name="Elder Mage"
+        avatar={require('../assets/avatars/woman.png')}
+        name="Lyra"
       />
       <Text style={styles.header}>Challenges</Text>
 

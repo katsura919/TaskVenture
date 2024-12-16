@@ -16,7 +16,7 @@ import Profile from './screens/Profile';
 import ChangePassword from './screens/ChangePassword';
 import Achievements from './screens/Achievements';
 import ProfileShare from './screens/ProfileShare';
-import Test from './screens/Test';
+
 
 
 
@@ -135,10 +135,10 @@ function MyTabs() {
         },
         tabBarShowLabel: true,
         tabBarStyle: {
-          backgroundColor: '#1e2026', // Dark background
+          backgroundColor: '#2c2f35', // Dark background
           height: 60,
           paddingBottom: 2,
-          elevation: 10, // Add elevation for Android shadow
+          elevation: 5, // Add elevation for Android shadow
           shadowOpacity: 0.1, // Set shadow opacity for iOS
           shadowOffset: { width: 0, height: 2 }, // Offset for shadow
           shadowRadius: 8, // Shadow radius for iOS
@@ -148,7 +148,7 @@ function MyTabs() {
           right: 0,
           bottom: 10,
           borderTopWidth: 0, // Remove the top border
-          borderRadius: 25,
+          borderRadius: 20,
         },
         tabBarActiveTintColor: '#f2f3f2', // Active tab icon color
         tabBarInactiveTintColor: '#95A5A6', // Inactive tab icon color

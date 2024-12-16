@@ -122,7 +122,7 @@ const styles = StyleSheet.create({
     width: '90%',
     padding: 20,
     backgroundColor: '#1e2026',
-    borderRadius: 10,
+    borderRadius: 15,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.2)',
   },

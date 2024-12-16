@@ -151,8 +151,8 @@ export default function MyTasks({ navigation }) {
           'Each quest is a stepping stone on your journey. Complete them to unlock greater rewards!',
           'Ready to choose your next adventure? The path is yours to decide.',
         ]}
-        avatar={require('../assets/avatars/wizard.png')}
-        name="Quest Keeper"
+        avatar={require('../assets/avatars/ogre2.png')}
+        name="Grumthar"
       />
 
 
